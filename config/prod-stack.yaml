@@ -22,10 +22,6 @@ Parameters:
     Type: String
     Description: App name
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
-  OwnerEmail:
-    Default: brent.m.foster@me.com
-    Type: String
-    Description: Owner email
   EnvPrefix:
     Default: prod
     Type: String
@@ -36,7 +32,6 @@ Parameters:
     Type: String
     Description: Bucket name
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
-
   HostedZoneId:
     Type: String
     Description: Hosted Zone ID for Route53 and ACM
@@ -44,10 +39,6 @@ Parameters:
     Default: "Brent Foster"
     Type: String
     Description: Owner name
-  RequestorName:
-    Default: "Brent Foster"
-    Type: String
-    Description: Requestor name
   AppDescription:
     Default: "Cozy Home Away Static Website"
     Type: String
@@ -201,7 +192,7 @@ Resources:
       AliasTarget:
         DNSName: !GetAtt WebsiteCloudFront.DomainName
         HostedZoneId: !Ref HostedZoneId
-      TTL: 300
+      # TTL not allowed for alias records
 
   CloudFrontAliasRecordAAAA:
     Type: AWS::Route53::RecordSet
@@ -212,7 +203,7 @@ Resources:
       AliasTarget:
         DNSName: !GetAtt WebsiteCloudFront.DomainName
         HostedZoneId: !Ref HostedZoneId
-      TTL: 300
+      # TTL not allowed for alias records
 
 # Outputs
 Outputs:

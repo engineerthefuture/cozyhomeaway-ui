@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Print referenced environment variables
         run: |
+          echo "AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}"
+          echo "OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME }}"
           echo "OwnerName: ${{ vars.OWNER_NAME }}"
           echo "AppName: ${{ vars.APP_NAME }}"
           echo "AppDescription: ${{ vars.APP_DESCRIPTION }}"
@@ -42,9 +44,9 @@ jobs:
               AppDescription="${{ vars.APP_DESCRIPTION }}" \
               HostedZoneId="${{ vars.HOSTED_ZONE_ID }}" \
             --tags \
-              OwnerName="${{ vars.OWNER_NAME }}" \
+              Owner="${{ vars.OWNER_NAME }}" \
               AppName="${{ vars.APP_NAME }}" \
-              AppDescription="${{ vars.APP_DESCRIPTION }}"
+              Description="${{ vars.APP_DESCRIPTION }}"
 
       - name: Copy src contents to S3 bucket
         run: |
