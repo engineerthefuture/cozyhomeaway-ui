@@ -63,10 +63,20 @@ function validateMessage() {
 function submitForm(e) {
     e.preventDefault();
 
+    // Disable submit button
+    var submitBtn = document.querySelector("#contact-form button[type='submit']");
+    if (submitBtn) submitBtn.disabled = true;
+
     // Run each validation
-    validateName();
-    validateEmail();
-    validateMessage();
+    var nameValid = validateName();
+    var emailValid = validateEmail();
+    var messageValid = validateMessage();
+
+    // If any validation fails, re-enable button and exit
+    if (!nameValid || !emailValid || !messageValid) {
+        if (submitBtn) submitBtn.disabled = false;
+        return false;
+    }
 
     // Validate Recaptcha
     grecaptcha.ready(function() {
@@ -127,12 +137,14 @@ function submitForm(e) {
                                 if (xhr.status === 200) {
                                     // The form submission was successful
                                     document.getElementById("response-div").innerHTML = "<h5 style=\"color:green;\">Message successfully sent.</h5>";
+                                    if (submitBtn) submitBtn.disabled = false;
                                     xhr.abort();
                                     return true;
                                 } else {
                                     // The form submission failed
                                     document.getElementById("response-div").innerHTML = "<h5 style=\"color:red;\">Something went wrong, and I apologize for the inconvenience. Please send an email to <a href='mailto:support@cozyhomeaway.com'>support@cozyhomeaway.com</a> to get in touch.</h5>";
                                     document.getElementById("form-div").style.display = "block";
+                                    if (submitBtn) submitBtn.disabled = false;
                                     console.error(xhr.responseText);
                                     xhr.abort();
                                     return false;
@@ -145,10 +157,12 @@ function submitForm(e) {
                         console.error(rxhr.responseText);
                         rxhr.abort();
                         document.getElementById("recaptchaValidation").innerHTML = "<h5 style=\"color:red;\">Recaptcha validation error.</h5>";
+                        if (submitBtn) submitBtn.disabled = false;
                         return false;
                     }
                 };
             } catch (err) {
+                if (submitBtn) submitBtn.disabled = false;
                 console.log("Error: " + err.message);
             }
         });
