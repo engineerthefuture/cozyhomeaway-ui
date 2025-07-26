@@ -131,7 +131,7 @@ function submitForm(e) {
                                     return true;
                                 } else {
                                     // The form submission failed
-                                    document.getElementById("response-div").innerHTML = "<h5 style=\"color:red;\">Something went wrong, and I apologize for the inconvenience. Please send an email to <a href='mailto:brent@brentfoster.me'>brent@brentfoster.me</a> to get in touch.</h5>";
+                                    document.getElementById("response-div").innerHTML = "<h5 style=\"color:red;\">Something went wrong, and I apologize for the inconvenience. Please send an email to <a href='mailto:support@cozyhomeaway.com'>support@cozyhomeaway.com</a> to get in touch.</h5>";
                                     document.getElementById("form-div").style.display = "block";
                                     console.error(xhr.responseText);
                                     xhr.abort();
