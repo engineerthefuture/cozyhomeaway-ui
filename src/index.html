@@ -1,10 +1,7 @@
 <!DOCTYPE HTML>
-<!--
-    Highlights by HTML5 UP
-    html5up.net | @ajlkn
-    Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
--->
+
 <html>
+<!-- Cozy Home Away Website -->
 
 <head>
     <title>Cozy Home Away</title>
@@ -133,7 +130,7 @@
                 <li><a href="#" class="icon brands alt fa-instagram"><span class="label">Instagram</span></a></li>
             </ul>
             <ul class="copyright">
-                <li>&copy; 2025 Cozy Home Away LLC</li>
+                <li>&copy; <span id="copyright-year"></span> Cozy Home Away LLC</li>
             </ul>
         </footer>
     </section>
@@ -147,6 +144,9 @@
     <script src="assets/js/util.js"></script>
     <script src="assets/js/main.js"></script>
     <script src="assets/js/contactform.js"></script>
+    <script>
+        document.getElementById('copyright-year').textContent = new Date().getFullYear();
+    </script>
 </body>
 
 </html>
