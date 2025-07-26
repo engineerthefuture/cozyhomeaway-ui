@@ -5,11 +5,11 @@ Description: Creates a static website using S3 and Cloudfront for the frontend U
 Metadata:
   AWS::CloudFormation::Interface:
     Tags:
-      - Key: OwnerName
+      - Key: Owner
         Value: !Ref OwnerName
-      - Key: AppDescription
+      - Key: Description
         Value: !Ref AppDescription
-      - Key: EnvPrefix
+      - Key: Environment
         Value: !Ref EnvPrefix
       - Key: AppName
         Value: !Ref AppName
@@ -65,23 +65,11 @@ Resources:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: cozyhomeaway.com
+      ValidationMethod: DNS
       DomainValidationOptions:
        - DomainName: cozhomeaway.com
          HostedZoneId: !Ref HostedZoneId
-      ValidationMethod: DNS
       Tags: 
-        - Key: "Owner"
-          Value: !Sub "${OwnerName}"
-        - Key: "Requestor"
-          Value: !Sub "${RequestorName}"
-        - Key: "AppName"
-          Value: !Sub "${AppName}"
-        - Key: "Description"
-          Value: !Sub "${AppDescription}"
-        - Key: "Environment"
-          Value: !Sub "${EnvPrefix}"
-        - Key: "OwnerTeamEmail"
-          Value: !Sub "${OwnerEmail}"
         - Key: "Name"
           Value: !Sub "${EnvPrefix}-${AppName}-cert"
 
@@ -110,18 +98,6 @@ Resources:
             Id: OpenCors
             MaxAge: '3600'
       Tags: 
-        - Key: "Owner"
-          Value: !Sub "${OwnerName}"
-        - Key: "Requestor"
-          Value: !Sub "${RequestorName}"
-        - Key: "AppName"
-          Value: !Sub "${AppName}"
-        - Key: "Description"
-          Value: !Sub "${AppDescription}"
-        - Key: "Environment"
-          Value: !Sub "${EnvPrefix}"
-        - Key: "OwnerTeamEmail"
-          Value: !Sub "${OwnerEmail}"
         - Key: "Name"
           Value: !Sub "${BucketName}"
     Type: AWS::S3::Bucket
@@ -212,18 +188,6 @@ Resources:
             ResponseCode: 200
             ResponsePagePath: /index.html
       Tags: 
-        - Key: "Owner"
-          Value: !Sub "${OwnerName}"
-        - Key: "Requestor"
-          Value: !Sub "${RequestorName}"
-        - Key: "AppName"
-          Value: !Sub "${AppName}"
-        - Key: "Description"
-          Value: !Sub "${AppDescription}"
-        - Key: "Environment"
-          Value: !Sub "${EnvPrefix}"
-        - Key: "OwnerTeamEmail"
-          Value: !Sub "${OwnerEmail}"
         - Key: "Name"
           Value: !Sub "${BucketName}-cdn"
 
