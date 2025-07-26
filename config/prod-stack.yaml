@@ -61,9 +61,7 @@ Resources:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: cozyhomeaway.com
-      DomainValidationOptions:
-            - DomainName: cozyhomeaway.com
-              ValidationDomain: cozyhomeaway.com
+      ValidationMethod: DNS
       Tags: 
         - Key: "Owner"
           Value: !Sub "${OwnerName}"
@@ -79,6 +77,17 @@ Resources:
           Value: !Sub "${OwnerEmail}"
         - Key: "Name"
           Value: !Sub "${EnvPrefix}-${AppName}-cert"
+
+  # Route53 record for ACM DNS validation
+  CertificateValidationRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: "cozyhomeaway.com."
+      Name: !GetAtt Certificate.DomainValidationOptions.0.ResourceRecord.Name
+      Type: !GetAtt Certificate.DomainValidationOptions.0.ResourceRecord.Type
+      TTL: 300
+      ResourceRecords:
+        - !GetAtt Certificate.DomainValidationOptions.0.ResourceRecord.Value
 
   WebsiteBucket:
     Properties:
@@ -191,10 +200,9 @@ Resources:
         PriceClass: PriceClass_100
         Restrictions:
           GeoRestriction:
-            RestrictionType: whitelist
+            RestrictionType: blacklist
             Locations:
-            - US
-            - CA
+              - CN
         ViewerCertificate:
           AcmCertificateArn: !Ref Certificate
           MinimumProtocolVersion: TLSv1.2_2021
@@ -221,6 +229,29 @@ Resources:
           Value: !Sub "${OwnerEmail}"
         - Key: "Name"
           Value: !Sub "${BucketName}-cdn"
+
+  # Route53 records for CloudFront distribution
+  CloudFrontAliasRecordA:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: "cozyhomeaway.com."
+      Name: "cozyhomeaway.com."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt WebsiteCloudFront.DomainName
+        HostedZoneId: "Z2FDTNDATAQYW2" # CloudFront hosted zone ID (global)
+      TTL: 300
+
+  CloudFrontAliasRecordAAAA:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: "cozyhomeaway.com."
+      Name: "cozyhomeaway.com."
+      Type: AAAA
+      AliasTarget:
+        DNSName: !GetAtt WebsiteCloudFront.DomainName
+        HostedZoneId: "Z2FDTNDATAQYW2"
+      TTL: 300
 
 # Outputs
 Outputs:
