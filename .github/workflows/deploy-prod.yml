@@ -36,7 +36,7 @@ jobs:
         run: |
           aws cloudformation deploy \
             --template-file config/prod-stack.yaml \
-            --stack-name cozyhomeaway-ui-prod \
+            --stack-name bf-prod-cozyhomeaway-ui \
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides \
               OwnerName="${{ vars.OWNER_NAME }}" \

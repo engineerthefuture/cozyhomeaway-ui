@@ -28,7 +28,7 @@ Parameters:
     Description: Environment prefix
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
   BucketName:
-    Default: avb-prod-s3-cozyhomeaway-ui
+    Default: bf-prod-s3-cozyhomeaway-ui
     Type: String
     Description: Bucket name
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
@@ -191,7 +191,7 @@ Resources:
       Type: A
       AliasTarget:
         DNSName: !GetAtt WebsiteCloudFront.DomainName
-        HostedZoneId: !Ref HostedZoneId
+        HostedZoneId: Z2FDTNDATAQYW2
       # TTL not allowed for alias records
 
   CloudFrontAliasRecordAAAA:
@@ -202,7 +202,7 @@ Resources:
       Type: AAAA
       AliasTarget:
         DNSName: !GetAtt WebsiteCloudFront.DomainName
-        HostedZoneId: !Ref HostedZoneId
+        HostedZoneId: Z2FDTNDATAQYW2
       # TTL not allowed for alias records
 
 # Outputs
