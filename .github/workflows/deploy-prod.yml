@@ -8,6 +8,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     env:
       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
       OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME }}
