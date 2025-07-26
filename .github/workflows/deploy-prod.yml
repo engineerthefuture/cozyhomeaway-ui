@@ -34,6 +34,7 @@ jobs:
               OwnerName="${{ vars.OwnerName }}" \
               AppName="${{ vars.AppName }}" \
               AppDescription="${{ vars.AppDescription }}" \
+              HostedZoneId="${{ vars.HOSTEDZONEID }}" \
             --tags \
               OwnerName="${{ vars.OwnerName }}" \
               AppName="${{ vars.AppName }}" \

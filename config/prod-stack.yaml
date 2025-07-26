@@ -36,6 +36,10 @@ Parameters:
     Type: String
     Description: Bucket name
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+
+  HostedZoneId:
+    Type: String
+    Description: Hosted Zone ID for Route53 and ACM
   OwnerName:
     Default: "Brent Foster"
     Type: String
@@ -63,7 +67,7 @@ Resources:
       DomainName: cozyhomeaway.com
       DomainValidationOptions:
        - DomainName: cozhomeaway.com
-         HostedZoneId: Z2FDTNDATAQYW2
+         HostedZoneId: !Ref HostedZoneId
       ValidationMethod: DNS
       Tags: 
         - Key: "Owner"
@@ -232,7 +236,7 @@ Resources:
       Type: A
       AliasTarget:
         DNSName: !GetAtt WebsiteCloudFront.DomainName
-        HostedZoneId: "Z2FDTNDATAQYW2" # CloudFront hosted zone ID (global)
+        HostedZoneId: !Ref HostedZoneId
       TTL: 300
 
   CloudFrontAliasRecordAAAA:
@@ -243,7 +247,7 @@ Resources:
       Type: AAAA
       AliasTarget:
         DNSName: !GetAtt WebsiteCloudFront.DomainName
-        HostedZoneId: "Z2FDTNDATAQYW2"
+        HostedZoneId: !Ref HostedZoneId
       TTL: 300
 
 # Outputs
