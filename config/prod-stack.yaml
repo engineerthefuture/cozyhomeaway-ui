@@ -211,3 +211,6 @@ Outputs:
     Value: !GetAtt 'WebsiteBucket.WebsiteURL'
   CloudFrontDomain:
     Value: !GetAtt 'WebsiteCloudFront.DomainName'
+  CloudFrontDistributionId:
+    Description: "CloudFront Distribution ID"
+    Value: !Ref WebsiteCloudFront
