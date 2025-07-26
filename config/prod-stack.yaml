@@ -1,11 +1,24 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: Creates a static website using S3 and Cloudfront for the frontend UI 
 
+# Stack-level tags
+Metadata:
+  AWS::CloudFormation::Interface:
+    Tags:
+      - Key: OwnerName
+        Value: !Ref OwnerName
+      - Key: AppDescription
+        Value: !Ref AppDescription
+      - Key: EnvPrefix
+        Value: !Ref EnvPrefix
+      - Key: AppName
+        Value: !Ref AppName
+
 # Parameters
 Parameters:
 
   AppName:
-    Default: cozyhomeaway
+    Default: cozyhomeaway-ui
     Type: String
     Description: App name
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
@@ -149,7 +162,7 @@ Resources:
         Enabled: 'true'
         Comment: !Sub "${EnvPrefix} - ${AppName}"
         Aliases:
-          - contact.avalonbay.com
+          - cozyhomeaway.com
         DefaultRootObject: index.html
         DefaultCacheBehavior:
           TargetOriginId: !Ref 'WebsiteBucket'
