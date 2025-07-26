@@ -62,7 +62,7 @@ jobs:
       - name: Copy src contents to S3 bucket
         run: |
           BUCKET_NAME=$(aws cloudformation describe-stacks \
-            --stack-name cozyhomeaway-ui-prod \
+            --stack-name bf-prod-cozyhomeaway-ui \
             --query "Stacks[0].Parameters[?ParameterKey=='BucketName'].ParameterValue" \
             --output text)
           aws s3 sync src/ s3://$BUCKET_NAME/ --delete
