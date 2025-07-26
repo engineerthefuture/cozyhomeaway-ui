@@ -1,3 +1,16 @@
+@media screen and (max-width: 768px) {
+    ul.actions,
+    ul.actions.special,
+    .scrolly,
+    .goto-next {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 1000;
+    }
+}
+
+
 /* Hide webp images in section spans */
 
 .section-bg img[src$='.webp'] {
