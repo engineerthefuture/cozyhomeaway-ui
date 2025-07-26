@@ -31,12 +31,12 @@ jobs:
             --stack-name cozyhomeaway-ui-prod \
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides \
-              OwnerName=${{ vars.OwnerName }} \
-              AppName=${{ vars.AppName }} \
+              OwnerName="${{ vars.OwnerName }}" \
+              AppName="${{ vars.AppName }}" \
               AppDescription="${{ vars.AppDescription }}" \
             --tags \
-              OwnerName=${{ vars.OwnerName }} \
-              AppName=${{ vars.AppName }} \
+              OwnerName="${{ vars.OwnerName }}" \
+              AppName="${{ vars.AppName }}" \
               AppDescription="${{ vars.AppDescription }}"
 
       - name: Copy src contents to S3 bucket
