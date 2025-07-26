@@ -1,0 +1,217 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates a static website using S3 and Cloudfront for the frontend UI 
+
+# Parameters
+Parameters:
+
+  AppName:
+    Default: cozyhomeaway
+    Type: String
+    Description: App name
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+  OwnerEmail:
+    Default: brent.m.foster@me.com
+    Type: String
+    Description: Owner email
+  EnvPrefix:
+    Default: prod
+    Type: String
+    Description: Environment prefix
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+  BucketName:
+    Default: avb-prod-s3-cozyhomeaway-ui
+    Type: String
+    Description: Bucket name
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+  OwnerName:
+    Default: "Brent Foster"
+    Type: String
+    Description: Owner name
+  RequestorName:
+    Default: "Brent Foster"
+    Type: String
+    Description: Requestor name
+  AppDescription:
+    Default: "Cozy Home Away Static Website"
+    Type: String
+    Description: Tag to create.
+  ParamReminder:
+    Default: "Stored in Secrets Manager"
+    Type: String
+    Description: Reminder to reference from Secrets Manager
+
+# Resources
+Resources:
+
+  #Cert
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: cozyhomeaway.com
+      DomainValidationOptions:
+            - DomainName: cozyhomeaway.com
+              ValidationDomain: cozyhomeaway.com
+      Tags: 
+        - Key: "Owner"
+          Value: !Sub "${OwnerName}"
+        - Key: "Requestor"
+          Value: !Sub "${RequestorName}"
+        - Key: "AppName"
+          Value: !Sub "${AppName}"
+        - Key: "Description"
+          Value: !Sub "${AppDescription}"
+        - Key: "Environment"
+          Value: !Sub "${EnvPrefix}"
+        - Key: "OwnerTeamEmail"
+          Value: !Sub "${OwnerEmail}"
+        - Key: "Name"
+          Value: !Sub "${EnvPrefix}-${AppName}-cert"
+
+  WebsiteBucket:
+    Properties:
+      BucketName: !Ref 'BucketName'
+      BucketEncryption:
+              ServerSideEncryptionConfiguration:
+                - ServerSideEncryptionByDefault:
+                    SSEAlgorithm: AES256
+      WebsiteConfiguration:
+        IndexDocument: index.html
+      PublicAccessBlockConfiguration:
+              BlockPublicAcls: true
+              BlockPublicPolicy: true
+              IgnorePublicAcls: true
+              RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - GET
+            AllowedOrigins:
+              - '*'
+            Id: OpenCors
+            MaxAge: '3600'
+      Tags: 
+        - Key: "Owner"
+          Value: !Sub "${OwnerName}"
+        - Key: "Requestor"
+          Value: !Sub "${RequestorName}"
+        - Key: "AppName"
+          Value: !Sub "${AppName}"
+        - Key: "Description"
+          Value: !Sub "${AppDescription}"
+        - Key: "Environment"
+          Value: !Sub "${EnvPrefix}"
+        - Key: "OwnerTeamEmail"
+          Value: !Sub "${OwnerEmail}"
+        - Key: "Name"
+          Value: !Sub "${BucketName}"
+    Type: AWS::S3::Bucket
+  
+  # IAM config for cloudfront to access S3 bucket
+  CloudFrontOriginIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: "origin identity"
+
+  # Associate IAM config for cloudfront with the S3 bucket
+  WebUIPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket:
+        Ref: WebsiteBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              CanonicalUser:
+                Fn::GetAtt: [ CloudFrontOriginIdentity , S3CanonicalUserId ]
+            Action: "s3:GetObject"
+            Resource: !Sub "${WebsiteBucket.Arn}/*"
+
+  # Cloudfront CDN
+  WebsiteCloudFront:
+    Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - WebsiteBucket
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt 'WebsiteBucket.RegionalDomainName'
+            Id: !Ref 'WebsiteBucket'
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOriginIdentity}"
+            OriginCustomHeaders:
+              - HeaderName: Access-Control-Allow-Origin
+                HeaderValue: '*'
+        Enabled: 'true'
+        Comment: !Sub "${EnvPrefix} - ${AppName}"
+        Aliases:
+          - contact.avalonbay.com
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          TargetOriginId: !Ref 'WebsiteBucket'
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - HEAD
+            - DELETE
+            - POST
+            - GET
+            - OPTIONS
+            - PUT
+            - PATCH
+          CachedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          Compress: false
+          ForwardedValues:
+            QueryString: 'true'
+            Cookies:
+              Forward: none
+            Headers:
+              - Access-Control-Request-Headers
+              - Access-Control-Request-Method
+              - Origin
+        PriceClass: PriceClass_100
+        Restrictions:
+          GeoRestriction:
+            RestrictionType: whitelist
+            Locations:
+            - US
+            - CA
+        ViewerCertificate:
+          AcmCertificateArn: !Ref Certificate
+          MinimumProtocolVersion: TLSv1.2_2021
+          SslSupportMethod: sni-only
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
+      Tags: 
+        - Key: "Owner"
+          Value: !Sub "${OwnerName}"
+        - Key: "Requestor"
+          Value: !Sub "${RequestorName}"
+        - Key: "AppName"
+          Value: !Sub "${AppName}"
+        - Key: "Description"
+          Value: !Sub "${AppDescription}"
+        - Key: "Environment"
+          Value: !Sub "${EnvPrefix}"
+        - Key: "OwnerTeamEmail"
+          Value: !Sub "${OwnerEmail}"
+        - Key: "Name"
+          Value: !Sub "${BucketName}-cdn"
+
+# Outputs
+Outputs:
+  S3WebsiteURL:
+    Value: !GetAtt 'WebsiteBucket.WebsiteURL'
+  CloudFrontDomain:
+    Value: !GetAtt 'WebsiteCloudFront.DomainName'

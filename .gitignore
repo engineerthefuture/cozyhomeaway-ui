@@ -1,0 +1,46 @@
+# Node modules and dependencies
+node_modules/
+
+# Build output
+/dist/
+/build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*
+
+# VS Code settings
+.vscode/
+
+# SASS cache
+.sass-cache/
+
+# Coverage reports
+coverage/
+
+# AWS credentials and secrets
+.aws/
+*.pem
+
+# Ignore workflow temp files
+.github/workflows/*.tmp
+
+# Ignore static site generated files (if any)
+public/
+
+# Ignore Python cache (if ever used)
+__pycache__/
+*.pyc
+
+# Ignore config secrets
+config/*.secrets.yaml
