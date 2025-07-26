@@ -19,8 +19,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Inject Recaptcha client key
         run: |
-          sed -i '' "s|__RECAPTCHA_CLIENT_KEY__|${{ vars.RECAPTCHA_CLIENT_KEY }}|g" src/index.html
-          sed -i '' "s|RECAPTCHA_CLIENT_KEY|${{ vars.RECAPTCHA_CLIENT_KEY }}|g" src/assets/js/contactform.js
+          sed -i "s|__RECAPTCHA_CLIENT_KEY__|${{ vars.RECAPTCHA_CLIENT_KEY }}|g" src/index.html
+          sed -i "s|RECAPTCHA_CLIENT_KEY|${{ vars.RECAPTCHA_CLIENT_KEY }}|g" src/assets/js/contactform.js
       - name: Inject contact form API and key
         run: |
           sed -i '' "s|__CONTACTFORM_API__|${{ vars.CONTACTFORM_API }}|g" src/assets/js/contactform.js
