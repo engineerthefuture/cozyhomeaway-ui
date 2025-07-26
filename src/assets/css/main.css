@@ -1,3 +1,10 @@
+/* Hide overlays for webp images in section spans */
+
+.section-bg img[src$='.webp']+ ::before {
+    display: none !important;
+}
+
+
 /* Hide webp images in section spans */
 
 .section-bg img[src$='.webp'] {
