@@ -23,8 +23,8 @@ jobs:
           sed -i "s|RECAPTCHA_CLIENT_KEY|${{ vars.RECAPTCHA_CLIENT_KEY }}|g" src/assets/js/contactform.js
       - name: Inject contact form API and key
         run: |
-          sed -i '' "s|__CONTACTFORM_API__|${{ vars.CONTACTFORM_API }}|g" src/assets/js/contactform.js
-          sed -i '' "s|__CONTACTFORM_KEY__|${{ vars.CONTACTFORM_KEY }}|g" src/assets/js/contactform.js
+          sed -i "s|__CONTACTFORM_API__|${{ vars.CONTACTFORM_API }}|g" src/assets/js/contactform.js
+          sed -i "s|__CONTACTFORM_KEY__|${{ vars.CONTACTFORM_KEY }}|g" src/assets/js/contactform.js
       - name: Print referenced environment variables
         run: |
           echo "AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}"
