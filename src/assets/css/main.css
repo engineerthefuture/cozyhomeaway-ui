@@ -3165,3 +3165,40 @@ button:disabled,
     opacity: 0.8;
     margin-top: 1em;
 }
+
+
+/* Booking platform section */
+
+.booking-section {
+    text-align: center;
+    margin: 2em 0;
+}
+
+.booking-section h3 {
+    margin-bottom: 1em;
+}
+
+.booking-actions {
+    justify-content: center;
+    gap: 1em;
+}
+
+.booking-note {
+    font-size: 0.9em;
+    opacity: 0.8;
+    margin-top: 1em;
+}
+
+
+/* Primary Book Now button section */
+
+.book-now-section {
+    text-align: center;
+    margin: 2em 0;
+}
+
+.book-now-note {
+    font-size: 0.9em;
+    opacity: 0.8;
+    margin-top: 1em;
+}
