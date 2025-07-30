@@ -3017,3 +3017,151 @@ button:disabled,
         padding: 0;
     }
 }
+
+
+/* Custom styles moved from inline CSS */
+
+
+/* Logo styling */
+
+.logo-image {
+    max-width: 200px;
+    display: block;
+    margin: 0 auto;
+}
+
+
+/* Feature boxes styling */
+
+.feature-box {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2em;
+    margin: 2em 0;
+    border-radius: 10px;
+}
+
+.feature-box h3 {
+    text-align: center;
+    margin-bottom: 1.5em;
+    color: #000000;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5em;
+    text-align: left;
+}
+
+.feature-grid h4 {
+    color: #4a90e2;
+    margin-bottom: 0.5em;
+}
+
+.feature-list {
+    list-style: none;
+    padding: 0;
+    font-size: 0.9em;
+    line-height: 1.6;
+}
+
+
+/* Activities list styling */
+
+.activities-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.emoji-icon {
+    font-size: 1.5em;
+    vertical-align: middle;
+}
+
+
+/* Location section styling */
+
+.location-box {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2em;
+    margin: 2em 0;
+    border-radius: 10px;
+}
+
+.location-box h3 {
+    text-align: center;
+    margin-bottom: 1.5em;
+    color: #000000;
+}
+
+.location-info {
+    text-align: center;
+    margin-bottom: 1.5em;
+}
+
+.location-address {
+    font-size: 1.1em;
+    color: #4a90e2;
+    margin-bottom: 0.5em;
+}
+
+.location-description {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+.map-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 1em;
+}
+
+.map-iframe {
+    border: 0;
+    border-radius: 10px;
+}
+
+.location-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1em;
+    margin-top: 1.5em;
+    text-align: center;
+}
+
+.location-grid h4 {
+    color: #4a90e2;
+    margin-bottom: 0.5em;
+}
+
+.location-grid p {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+
+/* Form input styling */
+
+.form-input {
+    margin-bottom: 1em;
+}
+
+.form-textarea {
+    margin-bottom: 1em;
+}
+
+.form-button {
+    margin-bottom: 1em;
+}
+
+
+/* Header address styling */
+
+.header-address {
+    font-size: 0.9em;
+    opacity: 0.8;
+    margin-top: 1em;
+}
