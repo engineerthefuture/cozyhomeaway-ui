@@ -1,12 +1,28 @@
+/* Force footer icons to always display */
+
+footer ul.icons,
+footer ul.icons li,
+footer ul.icons li a {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 @media screen and (max-width: 768px) {
     ul.actions,
     ul.actions.special,
     .scrolly,
-    .goto-next {
+    .goto-next,
+    ul.icons,
+    ul.icons li {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
         z-index: 1000;
+    }
+    ul.icons li {
+        display: inline-block !important;
+        padding: 0 1em 0 0;
     }
 }
 
