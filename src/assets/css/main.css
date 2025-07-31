@@ -2,21 +2,27 @@
 
 footer ul.icons,
 footer ul.icons li,
-footer ul.icons li a,
-footer ul.icons li a.icon,
-footer .icon,
-.icon {
+footer ul.icons li a {
     display: inline-block !important;
     visibility: visible !important;
     opacity: 1 !important;
 }
 
-footer ul.icons li a.icon:before {
+
+/* Ensure FontAwesome icons render properly */
+
+footer ul.icons li a.icon.brands:before {
+    font-family: "Font Awesome 5 Brands" !important;
+    font-weight: 400 !important;
     display: inline-block !important;
     visibility: visible !important;
-    opacity: 1 !important;
-    font-family: "Font Awesome 5 Free", "Font Awesome 5 Brands" !important;
+}
+
+footer ul.icons li a.icon.solid:before {
+    font-family: "Font Awesome 5 Free" !important;
     font-weight: 900 !important;
+    display: inline-block !important;
+    visibility: visible !important;
 }
 
 @media screen and (max-width: 768px) {
