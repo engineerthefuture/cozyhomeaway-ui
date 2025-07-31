@@ -2,10 +2,21 @@
 
 footer ul.icons,
 footer ul.icons li,
-footer ul.icons li a {
+footer ul.icons li a,
+footer ul.icons li a.icon,
+footer .icon,
+.icon {
     display: inline-block !important;
     visibility: visible !important;
     opacity: 1 !important;
+}
+
+footer ul.icons li a.icon:before {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    font-family: "Font Awesome 5 Free", "Font Awesome 5 Brands" !important;
+    font-weight: 900 !important;
 }
 
 @media screen and (max-width: 768px) {
