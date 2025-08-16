@@ -15,8 +15,8 @@
 </head>
 
 <body class="is-preload">
-    <section id="main" class="main compact-terms">
-        <div class="container" style="max-width:700px;padding:2em 1em 1em 1em;">
+    <section id="footer">
+        <div class="container">
             <header class="major" style="margin-bottom:1em;">
                 <h1 style="font-size:2em;">Terms &amp; Conditions</h1>
                 <p><small>Last updated: <span id="lastUpdated">8-9-2025</span></small></p>
@@ -37,7 +37,7 @@
             </details>
             <section id="booking">
                 <h2>Booking &amp; Payment</h2>
-                <ul style="margin:0 0 0.5em 1em;padding:0;">
+                <ul style="margin:0 0 0.5em 0;padding:0;text-align:left;list-style-position:inside;">
                     <li>Reservation confirmed after payment or deposit.</li>
                     <li>Accepted: credit/debit card, PayPal, Venmo, Zelle.</li>
                     <li>Refundable deposit: <strong>$300</strong>, returned within 7 days after checkout.</li>
@@ -45,7 +45,7 @@
             </section>
             <section id="cancellation">
                 <h2>Cancellation Policy</h2>
-                <ul style="margin:0 0 0.5em 1em;padding:0;">
+                <ul style="margin:0 0 0.5em 0;padding:0;text-align:left;list-style-position:inside;">
                     <li>Full refund if cancelled &ge; 7 days before check-in.</li>
                     <li>Within 7 days: refund only if rebooked.</li>
                     <li>Platform policies (Airbnb/VRBO) may apply.</li>
@@ -53,7 +53,7 @@
             </section>
             <section id="times">
                 <h2>Check-In &amp; Check-Out</h2>
-                <ul style="margin:0 0 0.5em 1em;padding:0;">
+                <ul style="margin:0 0 0.5em 0;padding:0;text-align:left;list-style-position:inside;">
                     <li><strong>Check-in:</strong> 4:00 PM</li>
                     <li><strong>Check-out:</strong> 11:00 AM</li>
                     <li>Early/late times require approval and may incur fees.</li>
@@ -61,7 +61,7 @@
             </section>
             <section id="occupancy">
                 <h2>Occupancy &amp; House Rules</h2>
-                <ul style="margin:0 0 0.5em 1em;padding:0;">
+                <ul style="margin:0 0 0.5em 0;padding:0;text-align:left;list-style-position:inside;">
                     <li>Max overnight: <strong>8 guests</strong></li>
                     <li>No pets. No smoking.</li>
                     <li>Fireplace not available for guests.</li>
@@ -71,7 +71,7 @@
             </section>
             <section id="amenities">
                 <h2>Amenities &amp; Safety</h2>
-                <ul style="margin:0 0 0.5em 1em;padding:0;">
+                <ul style="margin:0 0 0.5em 0;padding:0;text-align:left;list-style-position:inside;">
                     <li>Kayaks, paddle boards, games, grill, kitchen.</li>
                     <li>Life jackets required for watercraft.</li>
                     <li>Children supervised at all times.</li>
@@ -80,7 +80,7 @@
             </section>
             <section id="deposit">
                 <h2>Deposit, Damage &amp; Cleaning</h2>
-                <ul style="margin:0 0 0.5em 1em;padding:0;">
+                <ul style="margin:0 0 0.5em 0;padding:0;text-align:left;list-style-position:inside;">
                     <li>Deposit covers damage, excessive cleaning, lost items.</li>
                     <li>Report issues promptly.</li>
                     <li>Excess damage billed to guest.</li>
@@ -88,7 +88,7 @@
             </section>
             <section id="liability">
                 <h2>Liability &amp; Indemnification</h2>
-                <ul style="margin:0 0 0.5em 1em;padding:0;">
+                <ul style="margin:0 0 0.5em 0;padding:0;text-align:left;list-style-position:inside;">
                     <li>Use property/amenities at own risk.</li>
                     <li>Not responsible for accidents, illness, loss except gross negligence.</li>
                     <li>Guest indemnifies Cozy Home Away LLC.</li>
@@ -96,25 +96,27 @@
             </section>
             <section id="privacy">
                 <h2>Privacy</h2>
-                <ul style="margin:0 0 0.5em 1em;padding:0;">
+                <ul style="margin:0 0 0.5em 0;padding:0;text-align:left;list-style-position:inside;">
                     <li>Personal info used for booking/services/legal only.</li>
                     <li>No data sold. See <a href="/privacy-policy">Privacy Policy</a>.</li>
                 </ul>
             </section>
             <section id="contact">
                 <h2>Contact</h2>
-                <ul style="margin:0 0 0.5em 1em;padding:0;">
+                <ul style="margin:0 0 0.5em 0;padding:0;text-align:left;list-style-position:inside;">
                     <li>Email: <a href="mailto:support@cozyhomeaway.com">support@cozyhomeaway.com</a></li>
                 </ul>
             </section>
-            <footer id="footer" class="special" style="margin-top:2em;">
-                <div class="container" style="padding:1em 0 0 0;">
-                    <p style="font-size:0.95em;">By making a reservation and staying at our property you acknowledge that you have read, understand, and agree to these Terms &amp; Conditions.</p>
-                    <p><small>&copy; Cozy Home Away LLC. All rights reserved.</small></p>
-                </div>
-            </footer>
+            <div class="container" style="padding:1em 0 0 0;">
+                <p style="font-size:0.95em;">By making a reservation and staying at our property you acknowledge that you have read, understand, and agree to these Terms &amp; Conditions.</p>
+                <p><small>&copy; <span id="copyright-year"></span> Cozy Home Away LLC</small></p>
+            </div>
         </div>
     </section>
+    <!-- Scripts -->
+    <script>
+        document.getElementById('copyright-year').textContent = new Date().getFullYear();
+    </script>
 </body>
 
 </html>
