@@ -78,7 +78,7 @@
             "description": "Experience the perfect Lake Anna vacation at our 3 bedroom waterfront house with private dock and luxury amenities.",
             "url": "https://www.cozyhomeaway.com",
             "image": [
-                "https://www.cozyhomeaway.com/images/photo1.webp",
+                "https://www.cozyhomeaway.com/images/photo1.jpg",
                 "https://www.cozyhomeaway.com/images/photo2.webp",
                 "https://www.cozyhomeaway.com/images/photo3.webp"
             ],
@@ -95,8 +95,6 @@
                 "latitude": 38.1234567,
                 "longitude": -77.9876543
             },
-            "telephone": "+1-XXX-XXX-XXXX",
-            "priceRange": "$$$",
             "amenityFeature": [{
                 "@type": "LocationFeatureSpecification",
                 "name": "Private Dock",
@@ -174,19 +172,21 @@
                 <!-- VRBO Section -->
                 <div class="platform-section" style="text-align: center; flex: 1; min-width: 300px; max-width: 500px;">
                     <h3 style="margin-bottom: 1em;">Book on VRBO</h3>
-                    <div class="vrbo-listing-card" style="width: 450px; height: 300px; margin: auto; border-radius: 8px; position: relative; overflow: hidden; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                        <!-- Property Image -->
-                        <div id="vrbo-image" style="height: 200px; background-image: url('images/photo1.jpg'); background-size: cover; background-position: center; position: relative;">
-                            <div style="position: absolute; top: 10px; right: 10px; background: #003580; color: white; padding: 0.3em 0.6em; border-radius: 15px; font-size: 0.8em; font-weight: bold;">VRBO</div>
-                        </div>
+                    <a href="https://www.vrbo.com/4906384?dateless=true" target="_blank" rel="noopener" style="text-decoration: none; color: inherit; display: block;">
+                        <div class="vrbo-listing-card" style="width: 450px; height: 300px; margin: auto; border-radius: 8px; position: relative; overflow: hidden; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;">
+                            <!-- Property Image -->
+                            <div id="vrbo-image" style="height: 200px; background-image: url('images/photo1.jpg'); background-size: cover; background-position: center; position: relative;">
+                                <div style="position: absolute; top: 10px; right: 10px; background: #003580; color: white; padding: 0.3em 0.6em; border-radius: 15px; font-size: 0.8em; font-weight: bold;">VRBO</div>
+                            </div>
 
-                        <!-- Property Info -->
-                        <div style="padding: 1em; text-align: left; background: white;">
-                            <h4 style="margin: 0 0 0.5em 0; font-size: 1em; color: #333; font-weight: bold;">Lake Anna Waterfront Retreat</h4>
-                            <p style="margin: 0 0 1em 0; font-size: 0.9em; color: #666;">3 beds • 2.5 baths • Sleeps 8</p>
-                            <a href="https://www.vrbo.com/4906384?dateless=true" target="_blank" rel="noopener" style="display: inline-block; background: #003580 !important; color: white !important; text-decoration: none !important; padding: 0.8em 1.5em; border-radius: 6px; font-size: 0.95em; font-weight: bold; transition: background 0.2s; box-shadow: 0 2px 4px rgba(0,53,128,0.3);">View on VRBO</a>
+                            <!-- Property Info -->
+                            <div style="padding: 1em; text-align: left; background: white;">
+                                <h4 style="margin: 0 0 0.5em 0; font-size: 1em; color: #333; font-weight: bold;">Lake Anna Waterfront Retreat</h4>
+                                <p style="margin: 0 0 0.5em 0; font-size: 0.9em; color: #666;">3 beds • 2.5 baths • Sleeps 8</p>
+                                <p style="margin: 0; font-size: 0.9em; color: #003580; font-weight: bold;">Click to view on VRBO</p>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
 
             </div>
@@ -214,39 +214,6 @@
     <script src="assets/js/util.js"></script>
     <script src="assets/js/main.js"></script>
     <script src="assets/js/contactform.js"></script>
-    <script>
-        document.getElementById('copyright-year').textContent = new Date().getFullYear();
-
-        // Sync Airbnb image with VRBO card
-        function syncAirbnbImageToVrbo() {
-            setTimeout(() => {
-                const airbnbFrame = document.querySelector('.airbnb-embed-frame iframe');
-                if (airbnbFrame) {
-                    try {
-                        // Try to get the image from Airbnb embed
-                        const airbnbDoc = airbnbFrame.contentDocument || airbnbFrame.contentWindow.document;
-                        const airbnbImg = airbnbDoc.querySelector('img[src*="muscache"]');
-
-                        if (airbnbImg && airbnbImg.src) {
-                            const vrboImageDiv = document.getElementById('vrbo-image');
-                            if (vrboImageDiv) {
-                                vrboImageDiv.style.backgroundImage = `url('${airbnbImg.src}')`;
-                            }
-                        }
-                    } catch (e) {
-                        // Cross-origin restrictions prevent access, use fallback
-                        console.log('Using fallback image for VRBO card');
-                    }
-                }
-            }, 3000); // Wait for Airbnb embed to load
-        }
-
-        // Try to sync the image when page loads
-        window.addEventListener('load', syncAirbnbImageToVrbo);
-
-        // Also try after a delay for Airbnb embed
-        setTimeout(syncAirbnbImageToVrbo, 5000);
-    </script>
 </body>
 
 </html>
