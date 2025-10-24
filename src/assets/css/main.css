@@ -3235,3 +3235,37 @@ button:disabled,
     opacity: 0.8;
     margin-top: 1em;
 }
+
+/* Booking Platforms Responsive Design */
+.booking-platforms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2em;
+    justify-content: center;
+    margin: 2em 0;
+}
+
+.platform-section {
+    text-align: center;
+    flex: 1;
+    min-width: 300px;
+    max-width: 500px;
+}
+
+@media screen and (max-width: 736px) {
+    .booking-platforms {
+        flex-direction: column;
+        gap: 1.5em;
+    }
+    
+    .platform-section {
+        max-width: 100%;
+    }
+    
+    .airbnb-embed-frame,
+    .platform-section > div {
+        width: 100% !important;
+        max-width: 450px !important;
+        height: 300px !important;
+    }
+}
