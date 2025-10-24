@@ -3236,7 +3236,9 @@ button:disabled,
     margin-top: 1em;
 }
 
+
 /* Booking Platforms Responsive Design */
+
 .booking-platforms {
     display: flex;
     flex-wrap: wrap;
@@ -3252,18 +3254,23 @@ button:disabled,
     max-width: 500px;
 }
 
+/* VRBO Listing Card Styling */
+.vrbo-listing-card a:hover {
+    background: #002461 !important;
+    text-decoration: none !important;
+}
+
 @media screen and (max-width: 736px) {
     .booking-platforms {
         flex-direction: column;
         gap: 1.5em;
     }
-    
     .platform-section {
         max-width: 100%;
     }
-    
     .airbnb-embed-frame,
-    .platform-section > div {
+    .platform-section>div,
+    .vrbo-listing-card {
         width: 100% !important;
         max-width: 450px !important;
         height: 300px !important;
