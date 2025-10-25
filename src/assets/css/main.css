@@ -25,6 +25,93 @@ footer ul.icons li a.icon.solid:before {
     visibility: visible !important;
 }
 
+/* Specific FontAwesome icon content fixes */
+footer ul.icons li a.fa-instagram:before {
+    content: "\f16d" !important;
+    font-family: "Font Awesome 5 Brands" !important;
+    font-weight: 400 !important;
+    color: #ffffff !important;
+    font-size: 1.5em !important;
+}
+
+footer ul.icons li a.fa-home:before {
+    content: "\f015" !important;
+    font-family: "Font Awesome 5 Free" !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    font-size: 1.5em !important;
+}
+
+footer ul.icons li a.fa-bed:before {
+    content: "\f236" !important;
+    font-family: "Font Awesome 5 Free" !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    font-size: 1.5em !important;
+}
+
+/* Ensure all footer icons are visible */
+footer ul.icons li a {
+    color: #ffffff !important;
+    text-decoration: none !important;
+}
+
+/* Additional footer icon styling to ensure visibility */
+#footer footer ul.icons {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin: 1em 0 !important;
+}
+
+#footer footer ul.icons li {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin: 0 1em !important;
+}
+
+#footer footer ul.icons li a {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #ffffff !important;
+    font-size: 1.5em !important;
+    text-decoration: none !important;
+    position: relative !important;
+}
+
+#footer footer ul.icons li a:before {
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    font-style: normal !important;
+    font-variant: normal !important;
+    text-rendering: auto !important;
+    line-height: 1 !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+/* Force specific icon content regardless of class structure */
+#footer footer ul.icons li a[href*="instagram"]:before {
+    content: "\f16d" !important;
+    font-family: "Font Awesome 5 Brands" !important;
+    font-weight: 400 !important;
+}
+
+#footer footer ul.icons li a[href*="airbnb"]:before {
+    content: "\f015" !important;
+    font-family: "Font Awesome 5 Free" !important;
+    font-weight: 900 !important;
+}
+
+#footer footer ul.icons li a[href*="vrbo"]:before {
+    content: "\f236" !important;
+    font-family: "Font Awesome 5 Free" !important;
+    font-weight: 900 !important;
+}
+
 @media screen and (max-width: 768px) {
     ul.actions,
     ul.actions.special,
@@ -3067,39 +3154,34 @@ button:disabled,
         margin: 0;
         padding: 0;
     }
-    
     /* Header adjustments for very small screens */
     #header {
         height: 100vh !important;
         padding: 1em 0.5em !important;
     }
-    
     #header header {
         padding-top: 1em !important;
         padding-bottom: 1em !important;
         max-width: 95% !important;
     }
-    
     #header header h1 {
         font-size: 1.8em !important;
         line-height: 1.2 !important;
     }
-    
     #header header p {
         font-size: 0.9em !important;
         margin-top: 0.8em !important;
     }
-    
     #header .container {
         max-width: 95% !important;
         padding: 0.8em !important;
     }
-    
     #header .container .button {
         min-width: 180px !important;
         padding: 0.7em 1.2em !important;
         font-size: 0.85em !important;
-        min-height: 44px !important; /* Better touch target for mobile */
+        min-height: 44px !important;
+        /* Better touch target for mobile */
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
