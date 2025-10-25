@@ -2941,13 +2941,21 @@ button:disabled,
     }
     /* Header */
     #header {
-        height: 80vh;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 2em 1em;
     }
     #header:after {
-        height: 80vh;
+        display: none;
     }
     #header header {
-        padding-bottom: 0;
+        padding-bottom: 2em;
+        padding-top: 2em;
+        width: 100%;
+        max-width: 90%;
     }
     #header header h1 {
         font-size: 2em;
@@ -2956,7 +2964,17 @@ button:disabled,
         margin-top: 1em;
     }
     #header .container {
-        display: none;
+        position: static;
+        background: transparent;
+        margin: 0;
+        padding: 1em;
+        width: 100%;
+        max-width: 90%;
+    }
+    #header .container .button {
+        min-width: 200px;
+        padding: 0.8em 1.5em;
+        font-size: 0.9em;
     }
     /* Footer */
     #footer .container {
@@ -3048,6 +3066,43 @@ button:disabled,
         display: block;
         margin: 0;
         padding: 0;
+    }
+    
+    /* Header adjustments for very small screens */
+    #header {
+        height: 100vh !important;
+        padding: 1em 0.5em !important;
+    }
+    
+    #header header {
+        padding-top: 1em !important;
+        padding-bottom: 1em !important;
+        max-width: 95% !important;
+    }
+    
+    #header header h1 {
+        font-size: 1.8em !important;
+        line-height: 1.2 !important;
+    }
+    
+    #header header p {
+        font-size: 0.9em !important;
+        margin-top: 0.8em !important;
+    }
+    
+    #header .container {
+        max-width: 95% !important;
+        padding: 0.8em !important;
+    }
+    
+    #header .container .button {
+        min-width: 180px !important;
+        padding: 0.7em 1.2em !important;
+        font-size: 0.85em !important;
+        min-height: 44px !important; /* Better touch target for mobile */
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 }
 
