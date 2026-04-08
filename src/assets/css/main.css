@@ -2769,6 +2769,11 @@ button:disabled,
     display: inline-block;
     padding-bottom: 8em;
     vertical-align: top;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 6px;
+    padding: 2.5em 3em 8em;
 }
 
 #header header h1,
