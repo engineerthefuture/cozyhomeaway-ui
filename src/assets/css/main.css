@@ -3325,11 +3325,34 @@ button:disabled,
 
 .platform-section {
     text-align: center;
-    flex: 1;
-    min-width: 300px;
+    flex: 1 1 300px;
     max-width: 500px;
+    box-sizing: border-box;
 }
 
+.airbnb-embed-frame {
+    width: 100%;
+    max-width: 450px;
+    height: 300px;
+    margin: auto;
+    display: block;
+}
+
+.vrbo-listing-card,
+.booking-listing-card {
+    width: 100%;
+    max-width: 450px;
+    height: 300px;
+    margin: auto;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    box-sizing: border-box;
+}
 
 /* VRBO Listing Card Styling */
 
@@ -3342,16 +3365,18 @@ button:disabled,
     .booking-platforms {
         flex-direction: column;
         gap: 1.5em;
+        align-items: center;
     }
     .platform-section {
+        flex: none;
+        width: 100%;
         max-width: 100%;
     }
     .airbnb-embed-frame,
-    .platform-section>div,
-    .vrbo-listing-card {
-        width: 100% !important;
-        max-width: 450px !important;
-        height: 300px !important;
+    .vrbo-listing-card,
+    .booking-listing-card {
+        max-width: 100%;
+        width: 100%;
     }
 }
 
