@@ -3315,6 +3315,24 @@ button:disabled,
 
 /* Booking Platforms Responsive Design */
 
+.superhost-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    background: #fff8f6;
+    color: #FF385C;
+    border: 1px solid #FF385C;
+    border-radius: 2em;
+    font-size: 0.55em;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.3em 0.75em;
+    vertical-align: middle;
+    line-height: 1;
+    white-space: nowrap;
+}
+
 .booking-platforms {
     display: flex;
     flex-wrap: wrap;
