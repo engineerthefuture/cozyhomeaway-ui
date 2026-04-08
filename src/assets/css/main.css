@@ -3351,23 +3351,15 @@ button:disabled,
 }
 
 
-/* Reviews Carousel */
-
-#reviews {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 5em 0;
-    text-align: center;
-    box-shadow: inset 0 1px 0 0 #dddddd;
-}
-
-#reviews .container {
-    max-width: 700px;
-}
+/* Reviews Carousel (inline in hero header) */
 
 .reviews-carousel {
     position: relative;
-    min-height: 14em;
-    margin: 2em 0 1.5em;
+    width: 100%;
+    max-width: 38em;
+    margin: 1.5em auto 1em;
+    min-height: 5.5em;
+    text-align: center;
 }
 
 .review-slide {
@@ -3376,7 +3368,7 @@ button:disabled,
     left: 0;
     width: 100%;
     opacity: 0;
-    transition: opacity 0.7s ease-in-out;
+    transition: opacity 0.8s ease-in-out;
     pointer-events: none;
 }
 
@@ -3389,62 +3381,53 @@ button:disabled,
 .review-quote {
     border-left: none;
     font-style: italic;
-    font-size: 1.05em;
-    line-height: 1.8em;
-    color: #6f7577;
-    padding: 0 1em;
-    margin: 0 0 1.25em;
-}
-
-.review-quote::before {
-    content: '\201C';
-    font-size: 3em;
-    line-height: 0;
-    vertical-align: -0.5em;
-    color: #8cd1a8;
-    margin-right: 0.1em;
-    font-style: normal;
+    font-size: 0.85em;
+    line-height: 1.7em;
+    color: rgba(255, 255, 255, 0.75);
+    padding: 0;
+    margin: 0 0 0.6em;
 }
 
 .review-author {
     display: block;
     font-style: normal;
-    font-size: 0.9em;
-    color: #a8b0b3;
-    letter-spacing: 0.05em;
+    font-size: 0.75em;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .review-author strong {
-    color: #61686b;
+    color: rgba(255, 255, 255, 0.7);
     font-weight: 700;
 }
 
 .review-stars {
     color: #8cd1a8;
     letter-spacing: 0.05em;
-    margin-right: 0.4em;
+    margin-right: 0.3em;
 }
 
 .review-meta {
-    color: #a8b0b3;
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .carousel-dots {
     display: flex;
     justify-content: center;
-    gap: 0.6em;
-    margin-top: 1.5em;
+    gap: 0.55em;
+    margin-bottom: 1.5em;
 }
 
 .carousel-dot {
     appearance: none;
     -webkit-appearance: none;
-    background: #dddddd;
+    background: rgba(255, 255, 255, 0.3);
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    width: 0.6em;
-    height: 0.6em;
+    width: 0.45em;
+    height: 0.45em;
     padding: 0;
     transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
     box-shadow: none;
@@ -3453,22 +3436,22 @@ button:disabled,
 .carousel-dot.active,
 .carousel-dot:hover {
     background: #8cd1a8;
-    transform: scale(1.3);
+    transform: scale(1.4);
 }
 
 @media screen and (max-width: 736px) {
     .reviews-carousel {
-        min-height: 18em;
-    }
-    .review-quote {
-        font-size: 0.95em;
-        padding: 0;
+        min-height: 7em;
+        max-width: 90%;
     }
 }
 
 @media screen and (max-width: 480px) {
     .reviews-carousel {
-        min-height: 22em;
+        min-height: 9em;
+    }
+    .review-quote {
+        font-size: 0.8em;
     }
 }
 }
