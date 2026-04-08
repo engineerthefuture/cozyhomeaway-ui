@@ -3353,33 +3353,33 @@ button:disabled,
 
 /* Reviews Carousel (inline in hero header) */
 
+@keyframes reviewFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
 .reviews-carousel {
-    position: relative;
     width: 100%;
     max-width: 38em;
     margin: 1.75em auto 0;
-    height: 6.5em;
+    text-align: center;
 }
 
 .review-slide {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    opacity: 0;
-    transition: opacity 0.8s ease-in-out;
+    display: none;
 }
 
 .review-slide.active {
-    opacity: 1;
+    display: block;
+    animation: reviewFadeIn 0.8s ease-in-out;
 }
 
 .review-quote {
     border-left: none;
     font-style: italic;
-    font-size: 0.85em;
-    line-height: 1.7em;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9em;
+    line-height: 1.75em;
+    color: #ffffff;
     padding: 0;
     margin: 0 0 0.5em;
     font-weight: 400;
@@ -3391,14 +3391,14 @@ button:disabled,
     display: block;
     font-style: normal;
     font-size: 0.72em;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.65);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     font-weight: 400;
 }
 
 .review-author strong {
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.9) !important;
     font-weight: 700;
 }
 
@@ -3409,20 +3409,19 @@ button:disabled,
 }
 
 .review-meta {
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.5);
 }
 
 .carousel-dots {
     display: block;
     text-align: center;
     margin-top: 0.75em;
-    margin-bottom: 0;
 }
 
 .carousel-dot {
     appearance: none;
     -webkit-appearance: none;
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.35);
     border: none;
     border-radius: 50%;
     cursor: pointer;
@@ -3442,16 +3441,8 @@ button:disabled,
     transform: scale(1.4);
 }
 
-@media screen and (max-width: 980px) {
-    .reviews-carousel {
-        height: 7.5em;
-        max-width: 90%;
-    }
-}
-
 @media screen and (max-width: 736px) {
     .reviews-carousel {
-        height: 9em;
         max-width: 90%;
     }
     .review-quote {
@@ -3460,9 +3451,6 @@ button:disabled,
 }
 
 @media screen and (max-width: 480px) {
-    .reviews-carousel {
-        height: 11em;
-    }
     .review-quote {
         font-size: 0.75em;
     }
