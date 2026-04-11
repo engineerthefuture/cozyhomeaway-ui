@@ -43,6 +43,9 @@ Parameters:
     Default: "Cozy Home Away Static Website"
     Type: String
     Description: Tag to create.
+  DomainName:
+    Type: String
+    Description: Primary domain name for the website (e.g. cozyhomeaway.com)
   ParamReminder:
     Default: "Stored in Secrets Manager"
     Type: String
@@ -55,10 +58,10 @@ Resources:
   Certificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
-      DomainName: cozyhomeaway.com
+      DomainName: !Ref DomainName
       ValidationMethod: DNS
       DomainValidationOptions:
-       - DomainName: cozhomeaway.com
+       - DomainName: !Ref DomainName
          HostedZoneId: !Ref HostedZoneId
       Tags: 
         - Key: "Name"
@@ -134,7 +137,7 @@ Resources:
         Enabled: 'true'
         Comment: !Sub "${EnvPrefix} - ${AppName}"
         Aliases:
-          - cozyhomeaway.com
+          - !Ref DomainName
         DefaultRootObject: index.html
         DefaultCacheBehavior:
           TargetOriginId: !Ref 'WebsiteBucket'
@@ -186,8 +189,8 @@ Resources:
   CloudFrontAliasRecordA:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneName: "cozyhomeaway.com."
-      Name: "cozyhomeaway.com."
+      HostedZoneName: !Sub "${DomainName}."
+      Name: !Sub "${DomainName}."
       Type: A
       AliasTarget:
         DNSName: !GetAtt WebsiteCloudFront.DomainName
@@ -197,8 +200,8 @@ Resources:
   CloudFrontAliasRecordAAAA:
     Type: AWS::Route53::RecordSet
     Properties:
-      HostedZoneName: "cozyhomeaway.com."
-      Name: "cozyhomeaway.com."
+      HostedZoneName: !Sub "${DomainName}."
+      Name: !Sub "${DomainName}."
       Type: AAAA
       AliasTarget:
         DNSName: !GetAtt WebsiteCloudFront.DomainName
