@@ -18,38 +18,30 @@ Metadata:
 Parameters:
 
   AppName:
-    Default: cozyhomeaway-ui
     Type: String
     Description: App name
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
+  Namespace:
+    Type: String
+    Description: Short prefix namespace for resource naming (e.g. bf)
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9-]*"
   EnvPrefix:
     Default: prod
     Type: String
     Description: Environment prefix
     AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
-  BucketName:
-    Default: bf-prod-s3-cozyhomeaway-ui
-    Type: String
-    Description: Bucket name
-    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_-]*"
   HostedZoneId:
     Type: String
     Description: Hosted Zone ID for Route53 and ACM
   OwnerName:
-    Default: "Brent Foster"
     Type: String
     Description: Owner name
   AppDescription:
-    Default: "Cozy Home Away Static Website"
     Type: String
-    Description: Tag to create.
+    Description: App description
   DomainName:
     Type: String
-    Description: Primary domain name for the website (e.g. cozyhomeaway.com)
-  ParamReminder:
-    Default: "Stored in Secrets Manager"
-    Type: String
-    Description: Reminder to reference from Secrets Manager
+    Description: Primary domain name for the website (e.g. abc.com)
 
 # Resources
 Resources:
@@ -69,7 +61,7 @@ Resources:
 
   WebsiteBucket:
     Properties:
-      BucketName: !Ref 'BucketName'
+      BucketName: !Sub "${Namespace}-${EnvPrefix}-s3-${AppName}"
       BucketEncryption:
               ServerSideEncryptionConfiguration:
                 - ServerSideEncryptionByDefault:
@@ -93,7 +85,7 @@ Resources:
             MaxAge: '3600'
       Tags: 
         - Key: "Name"
-          Value: !Sub "${BucketName}"
+          Value: !Sub "${Namespace}-${EnvPrefix}-s3-${AppName}"
     Type: AWS::S3::Bucket
   
   # IAM config for cloudfront to access S3 bucket
@@ -183,7 +175,7 @@ Resources:
             ResponsePagePath: /index.html
       Tags: 
         - Key: "Name"
-          Value: !Sub "${BucketName}-cdn"
+          Value: !Sub "${Namespace}-${EnvPrefix}-s3-${AppName}-cdn"
 
   # Route53 records for CloudFront distribution
   CloudFrontAliasRecordA:
@@ -212,6 +204,9 @@ Resources:
 Outputs:
   S3WebsiteURL:
     Value: !GetAtt 'WebsiteBucket.WebsiteURL'
+  BucketName:
+    Description: "S3 Bucket Name"
+    Value: !Sub "${Namespace}-${EnvPrefix}-s3-${AppName}"
   CloudFrontDomain:
     Value: !GetAtt 'WebsiteCloudFront.DomainName'
   CloudFrontDistributionId:
