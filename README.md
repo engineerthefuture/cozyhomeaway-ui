@@ -46,8 +46,5 @@ flowchart TD
     S3Bucket -->|Encryption| KMS[AES256]
 ```
 
-## Contact
-For questions or booking inquiries, visit our website or email Brent Foster at brent@cozyhomeaway.com.
-
 ---
 © Cozy Home Away LLC. All rights reserved.
