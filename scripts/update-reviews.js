@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 'use strict';
 
-const { chromium } = require('playwright');
+const { chromium } = require('playwright-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+chromium.use(StealthPlugin());
 const fs   = require('fs');
 const path = require('path');
 
@@ -206,6 +208,48 @@ async function scrapeReviews(browser, url, platform) {
   }
 
   console.log(`  Page loaded: "${await page.title()}" (${page.url()})`);
+
+  // Airbnb shows reviews in a vertically-scrollable modal. Scroll inside it
+  // repeatedly to trigger lazy-loading of additional reviews.
+  const SCROLL_ATTEMPTS = 30;
+  for (let i = 0; i < SCROLL_ATTEMPTS; i++) {
+    const countBefore = reviews.length;
+
+    // Scroll the modal if present, otherwise scroll the page body.
+    await page.evaluate(() => {
+      const modalSelectors = [
+        '[data-testid="modal-container"]',
+        '[data-testid="reviews-modal"]',
+        '[role="dialog"]',
+        '[class*="modal"]',
+        '[class*="Modal"]',
+      ];
+      let scrollTarget = null;
+      for (const sel of modalSelectors) {
+        const el = document.querySelector(sel);
+        if (el && el.scrollHeight > el.clientHeight) {
+          scrollTarget = el;
+          break;
+        }
+      }
+      if (scrollTarget) {
+        scrollTarget.scrollTop = scrollTarget.scrollHeight;
+      } else {
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+    });
+
+    await page.waitForTimeout(1500);
+
+    // Stop early if the last two scroll attempts added nothing new.
+    if (reviews.length === countBefore && i > 2) {
+      console.log(`  No new reviews after scroll ${i + 1} — stopping`);
+      break;
+    }
+    if (reviews.length > countBefore) {
+      console.log(`  Scroll ${i + 1}: total captured so far: ${reviews.length}`);
+    }
+  }
 
   // __NEXT_DATA__ fallback — Airbnb and VRBO are Next.js apps that embed all
   // page data as JSON in a <script id="__NEXT_DATA__"> tag.
