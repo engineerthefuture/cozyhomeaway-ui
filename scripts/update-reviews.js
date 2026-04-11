@@ -53,7 +53,9 @@ function parseExistingReviews() {
     if (!textM || !nameM) continue;
 
     // meta content looks like: "· Airbnb" or "· Airbnb · Winchester, VA"
-    const parts    = metaM ? metaM[1].split(' · ').filter(Boolean) : ['Airbnb'];
+    // Strip the leading "· " bullet before splitting on remaining " · " delimiters.
+    const metaRaw  = metaM ? metaM[1].replace(/^·\s*/, '') : 'Airbnb';
+    const parts    = metaRaw.split(' · ').filter(Boolean);
     reviews.push({
       name:     nameM[1].trim(),
       text:     textM[1].trim(),

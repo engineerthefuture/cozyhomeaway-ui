@@ -60,6 +60,10 @@ jobs:
             --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
             --output text)
           aws s3 sync src/ s3://$BUCKET_NAME/ --delete
+          # reviews.html is updated frequently by the automated scraper — serve it
+          # with no-cache so browsers always revalidate instead of using a stale copy.
+          aws s3 cp src/reviews.html s3://$BUCKET_NAME/reviews.html \
+            --cache-control "no-cache, must-revalidate"
 
       - name: Invalidate CloudFront cache
         run: |
