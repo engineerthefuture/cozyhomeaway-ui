@@ -598,21 +598,16 @@ async function scrapeVrbo(browser) {
 
   const browser = await chromium.launch({ args: BROWSER_ARGS });
   let airbnbReviews = [];
-  let vrboReviews   = [];
 
   try {
     console.log('\nFetching Airbnb reviews...');
     airbnbReviews = await scrapeReviews(browser, AIRBNB_URL, 'Airbnb');
     console.log(`  ${airbnbReviews.length} found: ${airbnbReviews.map((r) => r.name).join(', ') || '(none)'}`);
-
-    console.log('\nFetching VRBO reviews...');
-    vrboReviews = await scrapeVrbo(browser);
-    console.log(`  ${vrboReviews.length} found: ${vrboReviews.map((r) => r.name).join(', ') || '(none)'}`);
   } finally {
     await browser.close();
   }
 
-  const newReviews = [...airbnbReviews, ...vrboReviews].filter(
+  const newReviews = [...airbnbReviews].filter(
     (r) => !existingKeys.has(r.name.toLowerCase())
   );
 
