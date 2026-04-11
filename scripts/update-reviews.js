@@ -523,14 +523,21 @@ async function scrapeVrbo(browser) {
           reviews.push(...domReviews);
         } else {
           console.log('  DOM extraction found 0 reviews');
-          // Dump modal HTML snippet for debugging
-          const snippet = await page.evaluate(() => {
-            const modal =
-              document.querySelector('[role="dialog"]') ||
-              document.querySelector('[class*="modal" i]');
-            return modal ? modal.innerHTML.slice(0, 2000) : '(no modal found)';
+          // Dump dialog structure to diagnose selectors
+          const debug = await page.evaluate(() => {
+            const dialog = document.querySelector('[role="dialog"]');
+            if (!dialog) return { html: '(no dialog found)', text: '', cardCount: 0 };
+            return {
+              html:      dialog.innerHTML.slice(0, 8000),
+              text:      dialog.innerText.slice(0, 3000),
+              cardCount: dialog.querySelectorAll('[class*="uitk-card"]').length,
+              liCount:   dialog.querySelectorAll('li').length,
+              pCount:    dialog.querySelectorAll('p').length,
+            };
           });
-          console.log('  Modal HTML snippet:', snippet);
+          console.log(`  Dialog stats — uitk-card:${debug.cardCount} li:${debug.liCount} p:${debug.pCount}`);
+          console.log('  Dialog text:\n', debug.text);
+          console.log('  Dialog HTML (8k):', debug.html);
         }
       } catch (e) {
         console.warn(`  VRBO DOM fallback error: ${e.message}`);
