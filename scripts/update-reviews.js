@@ -149,7 +149,7 @@ async function scrapeReviews(browser, url, platform) {
   // Intercept any request whose URL contains "review" (case-insensitive),
   // capture JSON responses, then let the request proceed normally.
   await page.route(
-    (u) => u.toLowerCase().includes('review'),
+    (u) => u.href.toLowerCase().includes('review'),
     async (route) => {
       let response;
       try {
