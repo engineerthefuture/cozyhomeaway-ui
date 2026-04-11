@@ -3489,6 +3489,21 @@ button:disabled,
     transform: scale(1.4);
 }
 
+/* Condensed paginator: dots outside the window collapse to zero width */
+.carousel-dot.dot-hidden {
+    width: 0;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: width 0.2s ease, margin 0.2s ease, opacity 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Sliding-window size tiers: tier 0 = active (full size, handled above),
+   tier 1 = neighbours, tier 2 = next out, tier 3 = outermost/edge */
+.carousel-dot.dot-sz-1 { transform: scale(1.0);  opacity: 0.75; }
+.carousel-dot.dot-sz-2 { transform: scale(0.75); opacity: 0.5;  }
+.carousel-dot.dot-sz-3 { transform: scale(0.55); opacity: 0.35; }
+
 @media screen and (max-width: 736px) {
     .reviews-carousel {
         max-width: 90%;
