@@ -180,34 +180,4 @@
         }
     });
 
-    // Sync Airbnb image with VRBO card
-    function syncAirbnbImageToVrbo() {
-        setTimeout(function() {
-            var airbnbFrame = document.querySelector('.airbnb-embed-frame iframe');
-            if (airbnbFrame) {
-                try {
-                    // Try to get the image from Airbnb embed
-                    var airbnbDoc = airbnbFrame.contentDocument || airbnbFrame.contentWindow.document;
-                    var airbnbImg = airbnbDoc.querySelector('img[src*="muscache"]');
-
-                    if (airbnbImg && airbnbImg.src) {
-                        var vrboImageDiv = document.getElementById('vrbo-image');
-                        if (vrboImageDiv) {
-                            vrboImageDiv.style.backgroundImage = 'url("' + airbnbImg.src + '")';
-                        }
-                    }
-                } catch (e) {
-                    // Cross-origin restrictions prevent access, use fallback
-                    console.log('Using fallback image for VRBO card');
-                }
-            }
-        }, 3000); // Wait for Airbnb embed to load
-    }
-
-    // Try to sync the image when page loads
-    $window.on('load', syncAirbnbImageToVrbo);
-
-    // Also try after a delay for Airbnb embed
-    setTimeout(syncAirbnbImageToVrbo, 5000);
-
 })(jQuery);

@@ -1,10 +1,14 @@
 fetch('reviews.html')
-    .then(function (r) { return r.text(); })
+    .then(function (r) {
+        if (!r.ok) { throw new Error('reviews.html not found: ' + r.status); }
+        return r.text();
+    })
     .then(function (html) {
         document.getElementById('reviews-placeholder').innerHTML = html;
 
         var slides = document.querySelectorAll('.review-slide');
         var dots = document.querySelectorAll('.carousel-dot');
+        if (!slides.length) { return; }
         var current = 0;
         var timer;
 
@@ -26,4 +30,5 @@ fetch('reviews.html')
         });
 
         startTimer();
-    });
+    })
+    .catch(function (err) { console.error('Carousel failed to load:', err); });
