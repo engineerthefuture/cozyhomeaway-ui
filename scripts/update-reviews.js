@@ -7,9 +7,10 @@ chromium.use(StealthPlugin());
 const fs   = require('fs');
 const path = require('path');
 
-const REVIEWS_PATH = path.resolve(__dirname, '../src/reviews.html');
-const AIRBNB_URL   = 'https://www.airbnb.com/rooms/1477018601970190586/reviews';
-const VRBO_URL     = 'https://www.vrbo.com/4906384?dateless=true&pwaDialog=product-reviews';
+const REVIEWS_PATH    = path.resolve(__dirname, '../src/reviews.html');
+const AIRBNB_URL      = 'https://www.airbnb.com/rooms/1477018601970190586/reviews';
+const VRBO_LISTING_ID = '4906384';
+const VRBO_PAGE_URL   = `https://www.vrbo.com/${VRBO_LISTING_ID}?dateless=true`;
 
 const BROWSER_ARGS = [
   '--no-sandbox',
@@ -310,6 +311,183 @@ async function scrapeReviews(browser, url, platform) {
   });
 }
 
+// ── VRBO-specific scraper ────────────────────────────────────────────────────
+//
+// VRBO's bot detection fires immediately when query params like pwaDialog= are
+// present in the initial request. Strategy:
+//   1. Land on plain listing page with humanlike pacing
+//   2. Wait until past any bot challenge (check title)
+//   3. Extract reviews from __NEXT_DATA__ (embedded Next.js JSON)
+//   4. If not there, scroll to the reviews section, click "See all", scroll modal
+
+async function scrapeVrbo(browser) {
+  const reviews = [];
+  const context = await browser.newContext({
+    userAgent: USER_AGENT,
+    viewport:  { width: 1440, height: 900 },
+    locale:    'en-US',
+    timezoneId:'America/New_York',
+    extraHTTPHeaders: {
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept':          'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Sec-Fetch-Dest':  'document',
+      'Sec-Fetch-Mode':  'navigate',
+      'Sec-Fetch-Site':  'none',
+      'Sec-Fetch-User':  '?1',
+    },
+  });
+
+  const page = await context.newPage();
+
+  // Route handler — intercepts all XHR/fetch, same as generic scraper
+  await page.route('**/*', async (route) => {
+    const req = route.request();
+    if (!['xhr', 'fetch'].includes(req.resourceType())) {
+      await route.continue();
+      return;
+    }
+    let response;
+    try { response = await route.fetch(); } catch { await route.continue(); return; }
+    const ct = response.headers()['content-type'] || '';
+    if (ct.includes('json')) {
+      try {
+        const body = await response.text();
+        const parsed = JSON.parse(body);
+        const found = findReviewsInJson(parsed, 'VRBO', 0);
+        if (found.length) {
+          const pathname = (() => { try { return new URL(req.url()).pathname; } catch { return req.url(); } })();
+          console.log(`  Captured ${found.length} VRBO review(s) from: ${pathname}`);
+          reviews.push(...found);
+        }
+      } catch { /* ignore */ }
+    }
+    await route.fulfill({ response });
+  });
+
+  // ── Step 1: land on plain listing page ──────────────────────────────────────
+  console.log(`  → ${VRBO_PAGE_URL}`);
+  try {
+    await page.goto(VRBO_PAGE_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  } catch (e) {
+    console.warn(`  VRBO goto failed: ${e.message}`);
+  }
+
+  // Simulate reading the page for 3–5 seconds
+  await page.waitForTimeout(3000 + Math.floor(Math.random() * 2000));
+
+  const title = await page.title();
+  console.log(`  Page loaded: "${title}" (${page.url()})`);
+
+  if (/bot or not|access denied|captcha|challenge/i.test(title)) {
+    console.warn('  VRBO bot challenge detected — waiting 10s and retrying scroll...');
+    await page.waitForTimeout(10000);
+  }
+
+  // ── Step 2: try to get reviews from __NEXT_DATA__ ───────────────────────────
+  try {
+    const nextData = await page.$eval('#__NEXT_DATA__', el => JSON.parse(el.textContent));
+    const found = findReviewsInJson(nextData, 'VRBO', 0);
+    if (found.length) {
+      console.log(`  Found ${found.length} VRBO reviews in __NEXT_DATA__`);
+      reviews.push(...found);
+    }
+  } catch { /* no __NEXT_DATA__ */ }
+
+  // ── Step 3: if still nothing, scroll to reviews section and open the modal ──
+  if (!reviews.length) {
+    // Scroll down slowly so the page lazy-loads the reviews section widget
+    const steps = 8;
+    for (let i = 1; i <= steps; i++) {
+      await page.evaluate((frac) => window.scrollTo(0, document.body.scrollHeight * frac), i / steps);
+      await page.waitForTimeout(600);
+    }
+    await page.waitForTimeout(1500);
+
+    // Try to click a "See all reviews" / "All reviews" button if present
+    const seeAllClicked = await page.evaluate(() => {
+      const patterns = [
+        /see all \d+ reviews?/i,
+        /all \d+ reviews?/i,
+        /read all reviews?/i,
+        /view all reviews?/i,
+      ];
+      const buttons = [...document.querySelectorAll('button, a')];
+      for (const btn of buttons) {
+        const text = btn.textContent.trim();
+        if (patterns.some(re => re.test(text))) {
+          btn.click();
+          return text;
+        }
+      }
+      return null;
+    });
+
+    if (seeAllClicked) {
+      console.log(`  Clicked: "${seeAllClicked}"`);
+      await page.waitForTimeout(2000);
+    } else {
+      // Navigate directly to the reviews dialog as a last resort
+      console.log(`  No "see all" button found — navigating to reviews dialog`);
+      try {
+        await page.goto(
+          `https://www.vrbo.com/${VRBO_LISTING_ID}?dateless=true&pwaDialog=product-reviews`,
+          { waitUntil: 'networkidle', timeout: 30000 }
+        );
+        await page.waitForTimeout(2000);
+      } catch (e) {
+        console.warn(`  VRBO dialog goto failed: ${e.message}`);
+      }
+    }
+
+    // ── Step 4: scroll the modal to load all reviews ──────────────────────────
+    for (let i = 0; i < 20; i++) {
+      const countBefore = reviews.length;
+
+      await page.evaluate(() => {
+        const modalSels = [
+          '[data-stid="reviews-modal"]',
+          '[data-stid="modal-container"]',
+          '[data-stid*="review"]',
+          '[role="dialog"]',
+          '[class*="modal"]',
+          '[class*="Modal"]',
+        ];
+        let target = null;
+        for (const sel of modalSels) {
+          const el = document.querySelector(sel);
+          if (el && el.scrollHeight > el.clientHeight) { target = el; break; }
+        }
+        if (target) {
+          target.scrollTop = target.scrollHeight;
+        } else {
+          window.scrollTo(0, document.body.scrollHeight);
+        }
+      });
+
+      await page.waitForTimeout(1500);
+
+      if (reviews.length === countBefore && i > 2) {
+        console.log(`  No new VRBO reviews after scroll ${i + 1} — stopping`);
+        break;
+      }
+      if (reviews.length > countBefore) {
+        console.log(`  VRBO scroll ${i + 1}: total captured so far: ${reviews.length}`);
+      }
+    }
+  }
+
+  await context.close();
+
+  // Deduplicate within batch
+  const seen = new Set();
+  return reviews.filter((r) => {
+    const key = r.name.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 (async () => {
@@ -328,7 +506,7 @@ async function scrapeReviews(browser, url, platform) {
     console.log(`  ${airbnbReviews.length} found: ${airbnbReviews.map((r) => r.name).join(', ') || '(none)'}`);
 
     console.log('\nFetching VRBO reviews...');
-    vrboReviews = await scrapeReviews(browser, VRBO_URL, 'VRBO');
+    vrboReviews = await scrapeVrbo(browser);
     console.log(`  ${vrboReviews.length} found: ${vrboReviews.map((r) => r.name).join(', ') || '(none)'}`);
   } finally {
     await browser.close();
