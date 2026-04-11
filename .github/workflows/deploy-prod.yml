@@ -1,4 +1,4 @@
-name: Deploy Production CloudFormation Stack
+name: Deploy CloudFormation Stack
 
 on:
   push:
@@ -25,27 +25,9 @@ jobs:
             echo "ENV_PREFIX=${{ github.ref_name }}" >> $GITHUB_ENV
           fi
           echo "STACK_NAME=${{ vars.NAMESPACE }}-$(echo ${{ github.ref_name }} | sed 's/main/prod/')-${{ vars.APP_NAME }}" >> $GITHUB_ENV
-      - name: Inject Recaptcha client key
-        run: |
-          sed -i "s|__RECAPTCHA_CLIENT_KEY__|${{ vars.RECAPTCHA_CLIENT_KEY }}|g" src/index.html
-          sed -i "s|RECAPTCHA_CLIENT_KEY|${{ vars.RECAPTCHA_CLIENT_KEY }}|g" src/assets/js/contactform.js
       - name: Inject Google Tag Manager ID
         run: |
           sed -i "s|__GTAG_ID__|${{ vars.GTAG_ID }}|g" src/index.html
-      - name: Inject contact form API and key
-        run: |
-          sed -i "s|__CONTACTFORM_API__|${{ vars.CONTACTFORM_API }}|g" src/assets/js/contactform.js
-          sed -i "s|__CONTACTFORM_KEY__|${{ vars.CONTACTFORM_KEY }}|g" src/assets/js/contactform.js
-      - name: Print referenced environment variables
-        run: |
-          echo "OwnerName: ${{ vars.OWNER_NAME }}"
-          echo "AppName: ${{ vars.APP_NAME }}"
-          echo "AppDescription: ${{ vars.APP_DESCRIPTION }}"
-          echo "HostedZoneId: ${{ vars.HOSTED_ZONE_ID }}"
-          echo "RECAPTCHA_CLIENT_KEY: ${{ vars.RECAPTCHA_CLIENT_KEY }}"
-          echo "CONTACTFORM_API: ${{ vars.CONTACTFORM_API }}"
-          echo "CONTACTFORM_KEY: ${{ vars.CONTACTFORM_KEY }}"
-
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
