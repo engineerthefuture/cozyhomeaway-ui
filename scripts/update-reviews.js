@@ -95,40 +95,50 @@ function buildHtml(reviews) {
   );
 }
 
-// ── JSON extraction — recursive search through any JSON shape ────────────────
+// ── JSON extraction ──────────────────────────────────────────────────────────
 
-// Returns a review object if `obj` looks like a single review, otherwise null.
 function tryParseReview(obj, platform) {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
 
   const text =
     (typeof obj.comments    === 'string' ? obj.comments    : null) ||
     (typeof obj.reviewText  === 'string' ? obj.reviewText  : null) ||
-    (typeof obj.body        === 'string' ? obj.body        : null);
+    (typeof obj.reviewBody  === 'string' ? obj.reviewBody  : null) ||
+    (typeof obj.body        === 'string' ? obj.body        : null) ||
+    (typeof obj.text        === 'string' ? obj.text        : null) ||
+    (typeof obj.description === 'string' ? obj.description : null);
 
   if (!text || text.trim().length < 10) return null;
 
-  const rev  = (obj.reviewer && typeof obj.reviewer === 'object') ? obj.reviewer : obj;
+  // Reviewer info may be nested under different keys
+  const rev =
+    (obj.reviewer     && typeof obj.reviewer     === 'object') ? obj.reviewer     :
+    (obj.reviewerInfo && typeof obj.reviewerInfo === 'object') ? obj.reviewerInfo :
+    obj;
   const name =
-    rev.first_name || rev.firstName || rev.displayName ||
+    rev.first_name || rev.firstName || rev.displayName || rev.name ||
     obj.reviewerName || obj.authorName || obj.guestName;
 
   if (!name) return null;
+
+  const loc =
+    (obj.reviewer     && obj.reviewer.location)     ||
+    (obj.reviewerInfo && obj.reviewerInfo.location) ||
+    obj.location || '';
 
   return {
     name:     String(name).trim(),
     text:     text.trim(),
     platform,
-    location: (obj.reviewer && obj.reviewer.location) || obj.location || '',
-    rating:   typeof (obj.rating ?? obj.overallRating) === 'number'
-      ? (obj.rating ?? obj.overallRating) : 5,
+    location: loc,
+    rating:   typeof (obj.rating ?? obj.overallRating ?? obj.starRating) === 'number'
+      ? (obj.rating ?? obj.overallRating ?? obj.starRating) : 5,
   };
 }
 
 function findReviewsInJson(obj, platform, depth) {
   if (depth > 14 || obj === null || typeof obj !== 'object') return [];
 
-  // Maybe this node itself is a review
   const asReview = tryParseReview(obj, platform);
   if (asReview) return [asReview];
 
@@ -138,10 +148,12 @@ function findReviewsInJson(obj, platform, depth) {
       results.push(...findReviewsInJson(item, platform, depth + 1));
     }
   } else {
-    // Prioritise keys likely to contain review data
+    // Check likely keys first
     const priorityKeys = [
       'reviews', 'reviewsList', 'reviewComments', 'reviewDetails',
+      'reviewInfo', 'reviewSummary', 'reviewHighlights',
       'sections', 'data', 'presentation', 'pdpReviews',
+      'propertyInfo', 'listingInfo',
     ];
     const allKeys = Object.keys(obj);
     const ordered = [
@@ -158,7 +170,7 @@ function findReviewsInJson(obj, platform, depth) {
   return results;
 }
 
-// ── scrape a single platform ──────────────────────────────────────────────────
+// ── Airbnb scraper ──────────────────────────────────────────────────────────
 
 async function scrapeReviews(browser, url, platform) {
   const reviews = [];
@@ -168,8 +180,7 @@ async function scrapeReviews(browser, url, platform) {
   });
   const page = await context.newPage();
 
-  // Intercept all XHR/fetch requests — Airbnb uses GraphQL where the operation
-  // name is in the POST body, not the URL, so URL-based filtering misses it.
+  // Capture JSON from all XHR/fetch responses
   await page.route('**/*', async (route) => {
     const req = route.request();
     if (!['xhr', 'fetch'].includes(req.resourceType())) {
@@ -212,13 +223,11 @@ async function scrapeReviews(browser, url, platform) {
 
   console.log(`  Page loaded: "${await page.title()}" (${page.url()})`);
 
-  // Airbnb shows reviews in a vertically-scrollable modal. Scroll inside it
-  // repeatedly to trigger lazy-loading of additional reviews.
+  // Scroll the reviews modal to load all reviews
   const SCROLL_ATTEMPTS = 30;
   for (let i = 0; i < SCROLL_ATTEMPTS; i++) {
     const countBefore = reviews.length;
 
-    // Scroll the modal if present, otherwise scroll the page body.
     await page.evaluate(() => {
       const modalSelectors = [
         '[data-testid="modal-container"]',
@@ -244,7 +253,6 @@ async function scrapeReviews(browser, url, platform) {
 
     await page.waitForTimeout(1500);
 
-    // Stop early if the last two scroll attempts added nothing new.
     if (reviews.length === countBefore && i > 2) {
       console.log(`  No new reviews after scroll ${i + 1} — stopping`);
       break;
@@ -254,8 +262,7 @@ async function scrapeReviews(browser, url, platform) {
     }
   }
 
-  // __NEXT_DATA__ fallback — Airbnb and VRBO are Next.js apps that embed all
-  // page data as JSON in a <script id="__NEXT_DATA__"> tag.
+  // Fallback: extract from embedded page JSON
   if (!reviews.length) {
     try {
       const nextData = await page.$eval('#__NEXT_DATA__', el => JSON.parse(el.textContent));
@@ -301,7 +308,7 @@ async function scrapeReviews(browser, url, platform) {
 
   await context.close();
 
-  // Deduplicate within this batch by name
+  // Deduplicate by name
   const seen = new Set();
   return reviews.filter((r) => {
     const key = r.name.toLowerCase();
@@ -311,14 +318,7 @@ async function scrapeReviews(browser, url, platform) {
   });
 }
 
-// ── VRBO-specific scraper ────────────────────────────────────────────────────
-//
-// VRBO's bot detection fires immediately when query params like pwaDialog= are
-// present in the initial request. Strategy:
-//   1. Land on plain listing page with humanlike pacing
-//   2. Wait until past any bot challenge (check title)
-//   3. Extract reviews from __NEXT_DATA__ (embedded Next.js JSON)
-//   4. If not there, scroll to the reviews section, click "See all", scroll modal
+// ── VRBO scraper ─────────────────────────────────────────────────────────────
 
 async function scrapeVrbo(browser) {
   const reviews = [];
@@ -339,7 +339,7 @@ async function scrapeVrbo(browser) {
 
   const page = await context.newPage();
 
-  // Route handler — intercepts all XHR/fetch, same as generic scraper
+  // Capture JSON from all XHR/fetch responses
   await page.route('**/*', async (route) => {
     const req = route.request();
     if (!['xhr', 'fetch'].includes(req.resourceType())) {
@@ -364,7 +364,6 @@ async function scrapeVrbo(browser) {
     await route.fulfill({ response });
   });
 
-  // ── Step 1: land on plain listing page ──────────────────────────────────────
   console.log(`  → ${VRBO_PAGE_URL}`);
   try {
     await page.goto(VRBO_PAGE_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
@@ -372,18 +371,17 @@ async function scrapeVrbo(browser) {
     console.warn(`  VRBO goto failed: ${e.message}`);
   }
 
-  // Simulate reading the page for 3–5 seconds
   await page.waitForTimeout(3000 + Math.floor(Math.random() * 2000));
 
   const title = await page.title();
   console.log(`  Page loaded: "${title}" (${page.url()})`);
 
   if (/bot or not|access denied|captcha|challenge/i.test(title)) {
-    console.warn('  VRBO bot challenge detected — waiting 10s and retrying scroll...');
+    console.warn('  Challenge page detected — waiting before continuing...');
     await page.waitForTimeout(10000);
   }
 
-  // ── Step 2: try to get reviews from __NEXT_DATA__ ───────────────────────────
+  // Try embedded page JSON first
   try {
     const nextData = await page.$eval('#__NEXT_DATA__', el => JSON.parse(el.textContent));
     const found = findReviewsInJson(nextData, 'VRBO', 0);
@@ -393,9 +391,8 @@ async function scrapeVrbo(browser) {
     }
   } catch { /* no __NEXT_DATA__ */ }
 
-  // ── Step 3: if still nothing, scroll to reviews section and open the modal ──
+  // Open the reviews modal and scroll to load all reviews
   if (!reviews.length) {
-    // Scroll down slowly so the page lazy-loads the reviews section widget
     const steps = 8;
     for (let i = 1; i <= steps; i++) {
       await page.evaluate((frac) => window.scrollTo(0, document.body.scrollHeight * frac), i / steps);
@@ -426,7 +423,6 @@ async function scrapeVrbo(browser) {
       console.log(`  Clicked: "${seeAllClicked}"`);
       await page.waitForTimeout(2000);
     } else {
-      // Navigate directly to the reviews dialog as a last resort
       console.log(`  No "see all" button found — navigating to reviews dialog`);
       try {
         await page.goto(
@@ -439,7 +435,6 @@ async function scrapeVrbo(browser) {
       }
     }
 
-    // ── Step 4: scroll the modal to load all reviews ──────────────────────────
     for (let i = 0; i < 20; i++) {
       const countBefore = reviews.length;
 
@@ -474,11 +469,72 @@ async function scrapeVrbo(browser) {
         console.log(`  VRBO scroll ${i + 1}: total captured so far: ${reviews.length}`);
       }
     }
+
+    if (!reviews.length) {
+      console.log('  Trying DOM extraction from open modal...');
+      try {
+        const domReviews = await page.evaluate(() => {
+          const results = [];
+          const modalRoot =
+            document.querySelector('[data-stid="reviews-user-generated-content-section"]') ||
+            document.querySelector('[data-stid*="review"]') ||
+            document.querySelector('[role="dialog"]') ||
+            document.querySelector('[class*="modal" i]') ||
+            document.body;
+
+          const cards = [
+            ...modalRoot.querySelectorAll('[data-stid="review-card"], [data-stid*="review-card"]'),
+          ];
+          const candidates = cards.length ? cards :
+            [...modalRoot.querySelectorAll('li, article, [class*="ReviewCard" i], [class*="review-card" i]')];
+
+          for (const el of candidates) {
+            const bodyEl =
+              el.querySelector('[data-stid="review-body"], [class*="review-body" i], [class*="reviewBody" i]') ||
+              el.querySelector('p, blockquote');
+            const text = (bodyEl?.textContent || '').trim();
+            if (text.length < 15) continue;
+
+            const nameEl =
+              el.querySelector('[data-stid="review-author"], [class*="reviewer" i], [class*="author" i], h3, h4, strong');
+            const rawName = (nameEl?.textContent || '').trim().split('\n')[0];
+            if (!rawName || rawName.length > 60 || /^[\d★\s]+$/.test(rawName)) continue;
+
+            let rating = 5;
+            const ratingEl = el.querySelector('[aria-label*="out of" i], [aria-label*="star" i], [class*="rating" i]');
+            if (ratingEl) {
+              const m = (ratingEl.getAttribute('aria-label') || '').match(/(\d(?:\.\d+)?)/);
+              if (m) rating = parseFloat(m[1]);
+            }
+
+            results.push({ name: rawName, text, platform: 'VRBO', location: '', rating });
+          }
+          return results;
+        });
+
+        if (domReviews.length) {
+          console.log(`  Found ${domReviews.length} VRBO reviews via DOM`);
+          reviews.push(...domReviews);
+        } else {
+          console.log('  DOM extraction found 0 reviews');
+          // Dump modal HTML snippet for debugging
+          const snippet = await page.evaluate(() => {
+            const modal =
+              document.querySelector('[role="dialog"]') ||
+              document.querySelector('[class*="modal" i]');
+            return modal ? modal.innerHTML.slice(0, 2000) : '(no modal found)';
+          });
+          console.log('  Modal HTML snippet:', snippet);
+        }
+      } catch (e) {
+        console.warn(`  VRBO DOM fallback error: ${e.message}`);
+      }
+    }
   }
 
   await context.close();
 
-  // Deduplicate within batch
+  // Deduplicate by name
   const seen = new Set();
   return reviews.filter((r) => {
     const key = r.name.toLowerCase();
