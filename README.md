@@ -1,5 +1,7 @@
 # Cozy Home Away LLC Static Website
 
+**Live site: [cozyhomeaway.com](https://cozyhomeaway.com)**
+
 Welcome to the source code for the Cozy Home Away LLC static website. This site is designed to showcase our family-friendly vacation rental and provide guests with a seamless booking experience.
 
 ## Features
