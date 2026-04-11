@@ -90,50 +90,67 @@ function buildHtml(reviews) {
   );
 }
 
-// ── JSON extraction (handles both Airbnb v2 REST and VRBO shapes) ─────────────
+// ── JSON extraction — recursive search through any JSON shape ────────────────
 
-function extractFromJson(json, platform) {
-  const reviews = [];
+// Returns a review object if `obj` looks like a single review, otherwise null.
+function tryParseReview(obj, platform) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
 
-  // Airbnb REST v2: { reviews: [...] }
-  if (Array.isArray(json?.reviews)) {
-    for (const r of json.reviews) {
-      const text = (r.comments || r.body || '').trim();
-      if (!text) continue;
-      reviews.push({
-        name:     r.reviewer?.first_name || r.reviewer?.name || 'Guest',
-        text,
-        platform,
-        location: r.reviewer?.location || '',
-        rating:   typeof r.rating === 'number' ? r.rating : 5,
-      });
+  const text =
+    (typeof obj.comments    === 'string' ? obj.comments    : null) ||
+    (typeof obj.reviewText  === 'string' ? obj.reviewText  : null) ||
+    (typeof obj.body        === 'string' ? obj.body        : null);
+
+  if (!text || text.trim().length < 10) return null;
+
+  const rev  = (obj.reviewer && typeof obj.reviewer === 'object') ? obj.reviewer : obj;
+  const name =
+    rev.first_name || rev.firstName || rev.displayName ||
+    obj.reviewerName || obj.authorName || obj.guestName;
+
+  if (!name) return null;
+
+  return {
+    name:     String(name).trim(),
+    text:     text.trim(),
+    platform,
+    location: (obj.reviewer && obj.reviewer.location) || obj.location || '',
+    rating:   typeof (obj.rating ?? obj.overallRating) === 'number'
+      ? (obj.rating ?? obj.overallRating) : 5,
+  };
+}
+
+function findReviewsInJson(obj, platform, depth) {
+  if (depth > 14 || obj === null || typeof obj !== 'object') return [];
+
+  // Maybe this node itself is a review
+  const asReview = tryParseReview(obj, platform);
+  if (asReview) return [asReview];
+
+  const results = [];
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      results.push(...findReviewsInJson(item, platform, depth + 1));
+    }
+  } else {
+    // Prioritise keys likely to contain review data
+    const priorityKeys = [
+      'reviews', 'reviewsList', 'reviewComments', 'reviewDetails',
+      'sections', 'data', 'presentation', 'pdpReviews',
+    ];
+    const allKeys = Object.keys(obj);
+    const ordered = [
+      ...priorityKeys.filter(k => allKeys.includes(k)),
+      ...allKeys.filter(k => !priorityKeys.includes(k)),
+    ];
+    for (const key of ordered) {
+      const val = obj[key];
+      if (val && typeof val === 'object') {
+        results.push(...findReviewsInJson(val, platform, depth + 1));
+      }
     }
   }
-
-  // VRBO / generic shapes
-  if (!reviews.length) {
-    const items =
-      json?.data?.reviews?.reviews ||
-      json?.reviewDetails?.reviews ||
-      json?.data?.reviewDetails?.reviews ||
-      [];
-    for (const r of items) {
-      const text = (r.reviewText || r.body || r.text || '').trim();
-      const name = r.reviewerName || r.reviewer?.displayName || r.authorName || 'Guest';
-      if (!text) continue;
-      reviews.push({
-        name,
-        text,
-        platform,
-        location: r.reviewer?.location || '',
-        rating:   typeof (r.overallRating ?? r.rating) === 'number'
-          ? (r.overallRating ?? r.rating)
-          : 5,
-      });
-    }
-  }
-
-  return reviews;
+  return results;
 }
 
 // ── scrape a single platform ──────────────────────────────────────────────────
@@ -146,41 +163,64 @@ async function scrapeReviews(browser, url, platform) {
   });
   const page = await context.newPage();
 
-  // Intercept any request whose URL contains "review" (case-insensitive),
-  // capture JSON responses, then let the request proceed normally.
-  await page.route(
-    (u) => u.href.toLowerCase().includes('review'),
-    async (route) => {
-      let response;
-      try {
-        response = await route.fetch();
-      } catch {
-        await route.continue();
-        return;
-      }
-
-      const ct = response.headers()['content-type'] || '';
-      if (ct.includes('json')) {
-        try {
-          const body = await response.text();
-          const json = JSON.parse(body);
-          reviews.push(...extractFromJson(json, platform));
-        } catch { /* non-JSON or unexpected shape */ }
-      }
-
-      await route.fulfill({ response });
+  // Intercept all XHR/fetch requests — Airbnb uses GraphQL where the operation
+  // name is in the POST body, not the URL, so URL-based filtering misses it.
+  await page.route('**/*', async (route) => {
+    const req = route.request();
+    if (!['xhr', 'fetch'].includes(req.resourceType())) {
+      await route.continue();
+      return;
     }
-  );
+
+    let response;
+    try {
+      response = await route.fetch();
+    } catch {
+      await route.continue();
+      return;
+    }
+
+    const ct = response.headers()['content-type'] || '';
+    if (ct.includes('json')) {
+      try {
+        const body = await response.text();
+        const json = JSON.parse(body);
+        const found = findReviewsInJson(json, platform, 0);
+        if (found.length) {
+          const pathname = (() => { try { return new URL(req.url()).pathname; } catch { return req.url(); } })();
+          console.log(`  Captured ${found.length} review(s) from: ${pathname}`);
+          reviews.push(...found);
+        }
+      } catch { /* ignore parse errors */ }
+    }
+
+    await route.fulfill({ response });
+  });
 
   try {
     console.log(`  → ${url}`);
     await page.goto(url, { waitUntil: 'networkidle', timeout: 45000 });
-    await page.waitForTimeout(2000); // allow any deferred API calls to settle
+    await page.waitForTimeout(2000);
   } catch (e) {
     console.warn(`  Warning (${platform}): ${e.message}`);
   }
 
-  // DOM fallback if network interception yielded nothing
+  console.log(`  Page loaded: "${await page.title()}" (${page.url()})`);
+
+  // __NEXT_DATA__ fallback — Airbnb and VRBO are Next.js apps that embed all
+  // page data as JSON in a <script id="__NEXT_DATA__"> tag.
+  if (!reviews.length) {
+    try {
+      const nextData = await page.$eval('#__NEXT_DATA__', el => JSON.parse(el.textContent));
+      const found = findReviewsInJson(nextData, platform, 0);
+      if (found.length) {
+        console.log(`  Found ${found.length} reviews in __NEXT_DATA__`);
+        reviews.push(...found);
+      }
+    } catch { /* page doesn't have __NEXT_DATA__ */ }
+  }
+
+  // DOM fallback
   if (!reviews.length) {
     console.log(`  No API reviews captured for ${platform} — trying DOM fallback...`);
     try {
