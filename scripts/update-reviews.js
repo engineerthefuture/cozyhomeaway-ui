@@ -20,7 +20,7 @@ const BROWSER_ARGS = [
 
 const USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
-  '(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+  '(KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -365,6 +365,15 @@ async function scrapeVrbo(browser) {
   });
 
   console.log(`  → ${VRBO_PAGE_URL}`);
+  // Warm up session — visit VRBO homepage first to establish cookies
+  console.log('  Warming up VRBO session...');
+  try {
+    await page.goto('https://www.vrbo.com/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(2000 + Math.floor(Math.random() * 2000));
+  } catch (e) {
+    console.warn(`  VRBO warmup warning: ${e.message}`);
+  }
+
   try {
     await page.goto(VRBO_PAGE_URL, { waitUntil: 'domcontentloaded', timeout: 45000 });
   } catch (e) {
@@ -373,12 +382,23 @@ async function scrapeVrbo(browser) {
 
   await page.waitForTimeout(3000 + Math.floor(Math.random() * 2000));
 
-  const title = await page.title();
+  let title = await page.title();
   console.log(`  Page loaded: "${title}" (${page.url()})`);
 
   if (/bot or not|access denied|captcha|challenge/i.test(title)) {
-    console.warn('  Challenge page detected — waiting before continuing...');
-    await page.waitForTimeout(10000);
+    console.warn('  Challenge page detected — retrying after delay...');
+    await page.waitForTimeout(8000 + Math.floor(Math.random() * 4000));
+    try {
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
+      await page.waitForTimeout(3000);
+    } catch { }
+    title = await page.title();
+    console.log(`  After retry: "${title}"`);
+    if (/bot or not|access denied|captcha|challenge/i.test(title)) {
+      console.warn('  Still blocked — skipping VRBO this run');
+      await context.close();
+      return [];
+    }
   }
 
   // Try embedded page JSON first
@@ -421,8 +441,19 @@ async function scrapeVrbo(browser) {
 
     if (seeAllClicked) {
       console.log(`  Clicked: "${seeAllClicked}"`);
-      // Wait for UITK modal to fully render
-      await page.waitForTimeout(4000);
+      // Wait for UITK modal to fully render — poll until text content appears
+      try {
+        await page.waitForFunction(() => {
+          const content = document.querySelector('.uitk-sheet-content');
+          if (!content) return false;
+          // Accept either <p> tags or UITK text elements
+          return content.querySelectorAll('p, [class*="uitk-text"]').length >= 5;
+        }, { timeout: 20000 });
+        console.log('  Modal content loaded');
+      } catch {
+        console.log('  Timed out waiting for modal content, proceeding anyway');
+        await page.waitForTimeout(5000);
+      }
     } else {
       console.log(`  No "see all" button found — navigating to reviews dialog`);
       try {
@@ -437,14 +468,11 @@ async function scrapeVrbo(browser) {
     }
 
     for (let i = 0; i < 20; i++) {
-      const countBefore = reviews.length;
-
       await page.evaluate(() => {
         // VRBO uses UITK framework — scrollable region is uitk-sheet-content
         const modalSels = [
+          '.uitk-sheet-content',
           '[class*="uitk-sheet-content"]',
-          '[class*="uitk-layout-flex-item"][class*="scroll"]',
-          '[role="dialog"] section',
           '[role="dialog"]',
           '[class*="modal"]',
         ];
@@ -459,17 +487,9 @@ async function scrapeVrbo(browser) {
           window.scrollTo(0, document.body.scrollHeight);
         }
       });
-
-      await page.waitForTimeout(1500);
-
-      if (reviews.length === countBefore && i > 2) {
-        console.log(`  No new VRBO reviews after scroll ${i + 1} — stopping`);
-        break;
-      }
-      if (reviews.length > countBefore) {
-        console.log(`  VRBO scroll ${i + 1}: total captured so far: ${reviews.length}`);
-      }
+      await page.waitForTimeout(1000);
     }
+    console.log('  Finished modal scroll');
 
     if (!reviews.length) {
       console.log('  Trying DOM extraction from open modal...');
@@ -477,37 +497,41 @@ async function scrapeVrbo(browser) {
         const domReviews = await page.evaluate(() => {
           const results = [];
 
-          // VRBO's UITK framework renders the review dialog as [role="dialog"]
-          // with a section element containing uitk-card items for each review.
-          const dialog = document.querySelector('[role="dialog"]');
-          if (!dialog) return results;
+          // Root is uitk-sheet-content — the reviews live in the 3-col layout grid
+          const root = document.querySelector('.uitk-sheet-content') ||
+                       document.querySelector('[role="dialog"]');
+          if (!root) return results;
 
-          // Each review is a uitk-card inside the dialog section
-          const cards = [
-            ...dialog.querySelectorAll('[class*="uitk-card"]'),
-            ...dialog.querySelectorAll('li[class*="uitk"]'),
-          ].filter(el => {
-            // Only keep cards that contain meaningful text (not the toolbar)
-            return el.textContent.trim().length > 30;
-          });
+          // Each review block will contain text — look for p or UITK text elements
+          const textEls = [...root.querySelectorAll('p, [class*="uitk-text"]')]
+            .filter(el => el.textContent.trim().length > 20 &&
+              // Skip elements that just wrap other text elements
+              !el.querySelector('p, [class*="uitk-text"]'));
 
-          for (const card of cards) {
-            // Review text: largest text block in the card
-            const paras = [...card.querySelectorAll('p, [class*="uitk-text"]')]
-              .map(el => el.textContent.trim())
-              .filter(t => t.length > 20);
-            const text = paras.sort((a, b) => b.length - a.length)[0];
-            if (!text) continue;
+          for (const el of textEls) {
+            const text = el.textContent.trim();
+            if (text.length < 20) continue;
+
+            // Walk up to find a logical grouping container (up to 6 levels)
+            let container = el.parentElement;
+            for (let i = 0; i < 6 && container && container !== root; i++) {
+              // Stop at a container that has a heading/name sibling
+              if (container.querySelector('h2, h3, h4, strong, [class*="uitk-heading"]')) break;
+              container = container.parentElement;
+            }
+            if (!container || container === root) continue;
 
             // Reviewer name: headings or bold text
-            const nameEl = card.querySelector('h2, h3, h4, strong, [class*="uitk-heading"]');
+            const nameEl = container.querySelector(
+              'h2, h3, h4, strong, [class*="uitk-heading"]'
+            );
             const rawName = (nameEl?.textContent || '').trim().split('\n')[0].split('  ')[0];
             if (!rawName || rawName.length > 60 || /^[\d★\s/]+$/.test(rawName)) continue;
-            // Skip if it looks like the property title
-            if (/lake anna|retreat|getaway|kayak/i.test(rawName)) continue;
+            // Skip property title or UI labels
+            if (/lake anna|retreat|getaway|kayak|guest reviews/i.test(rawName)) continue;
 
             let rating = 5;
-            const ratingEl = card.querySelector('[aria-label*="out of" i], [aria-label*="star" i]');
+            const ratingEl = container.querySelector('[aria-label*="out of" i], [aria-label*="star" i]');
             if (ratingEl) {
               const m = (ratingEl.getAttribute('aria-label') || '').match(/(\d(?:\.\d+)?)/);
               if (m) rating = parseFloat(m[1]);
@@ -518,26 +542,33 @@ async function scrapeVrbo(browser) {
           return results;
         });
 
-        if (domReviews.length) {
-          console.log(`  Found ${domReviews.length} VRBO reviews via DOM`);
-          reviews.push(...domReviews);
+        // Dedupe by name within DOM results
+        const seen = new Set();
+        const unique = domReviews.filter(r => {
+          const k = r.name.toLowerCase();
+          if (seen.has(k)) return false;
+          seen.add(k); return true;
+        });
+
+        if (unique.length) {
+          console.log(`  Found ${unique.length} VRBO reviews via DOM`);
+          reviews.push(...unique);
         } else {
           console.log('  DOM extraction found 0 reviews');
-          // Dump dialog structure to diagnose selectors
           const debug = await page.evaluate(() => {
-            const dialog = document.querySelector('[role="dialog"]');
-            if (!dialog) return { html: '(no dialog found)', text: '', cardCount: 0 };
+            const root = document.querySelector('.uitk-sheet-content') ||
+                         document.querySelector('[role="dialog"]');
+            if (!root) return { html: '(no root)', text: '', pCount: 0 };
             return {
-              html:      dialog.innerHTML.slice(0, 8000),
-              text:      dialog.innerText.slice(0, 3000),
-              cardCount: dialog.querySelectorAll('[class*="uitk-card"]').length,
-              liCount:   dialog.querySelectorAll('li').length,
-              pCount:    dialog.querySelectorAll('p').length,
+              html:   root.innerHTML.slice(0, 10000),
+              text:   root.innerText.slice(0, 3000),
+              pCount: root.querySelectorAll('p').length,
+              hCount: root.querySelectorAll('h2,h3,h4,strong').length,
             };
           });
-          console.log(`  Dialog stats — uitk-card:${debug.cardCount} li:${debug.liCount} p:${debug.pCount}`);
-          console.log('  Dialog text:\n', debug.text);
-          console.log('  Dialog HTML (8k):', debug.html);
+          console.log(`  Sheet stats — p:${debug.pCount} headings/strong:${debug.hCount}`);
+          console.log('  Sheet text:\n', debug.text);
+          console.log('  Sheet HTML (10k):', debug.html);
         }
       } catch (e) {
         console.warn(`  VRBO DOM fallback error: ${e.message}`);
