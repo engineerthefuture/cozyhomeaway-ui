@@ -421,7 +421,8 @@ async function scrapeVrbo(browser) {
 
     if (seeAllClicked) {
       console.log(`  Clicked: "${seeAllClicked}"`);
-      await page.waitForTimeout(2000);
+      // Wait for UITK modal to fully render
+      await page.waitForTimeout(4000);
     } else {
       console.log(`  No "see all" button found — navigating to reviews dialog`);
       try {
@@ -439,13 +440,13 @@ async function scrapeVrbo(browser) {
       const countBefore = reviews.length;
 
       await page.evaluate(() => {
+        // VRBO uses UITK framework — scrollable region is uitk-sheet-content
         const modalSels = [
-          '[data-stid="reviews-modal"]',
-          '[data-stid="modal-container"]',
-          '[data-stid*="review"]',
+          '[class*="uitk-sheet-content"]',
+          '[class*="uitk-layout-flex-item"][class*="scroll"]',
+          '[role="dialog"] section',
           '[role="dialog"]',
           '[class*="modal"]',
-          '[class*="Modal"]',
         ];
         let target = null;
         for (const sel of modalSels) {
@@ -475,33 +476,38 @@ async function scrapeVrbo(browser) {
       try {
         const domReviews = await page.evaluate(() => {
           const results = [];
-          const modalRoot =
-            document.querySelector('[data-stid="reviews-user-generated-content-section"]') ||
-            document.querySelector('[data-stid*="review"]') ||
-            document.querySelector('[role="dialog"]') ||
-            document.querySelector('[class*="modal" i]') ||
-            document.body;
 
+          // VRBO's UITK framework renders the review dialog as [role="dialog"]
+          // with a section element containing uitk-card items for each review.
+          const dialog = document.querySelector('[role="dialog"]');
+          if (!dialog) return results;
+
+          // Each review is a uitk-card inside the dialog section
           const cards = [
-            ...modalRoot.querySelectorAll('[data-stid="review-card"], [data-stid*="review-card"]'),
-          ];
-          const candidates = cards.length ? cards :
-            [...modalRoot.querySelectorAll('li, article, [class*="ReviewCard" i], [class*="review-card" i]')];
+            ...dialog.querySelectorAll('[class*="uitk-card"]'),
+            ...dialog.querySelectorAll('li[class*="uitk"]'),
+          ].filter(el => {
+            // Only keep cards that contain meaningful text (not the toolbar)
+            return el.textContent.trim().length > 30;
+          });
 
-          for (const el of candidates) {
-            const bodyEl =
-              el.querySelector('[data-stid="review-body"], [class*="review-body" i], [class*="reviewBody" i]') ||
-              el.querySelector('p, blockquote');
-            const text = (bodyEl?.textContent || '').trim();
-            if (text.length < 15) continue;
+          for (const card of cards) {
+            // Review text: largest text block in the card
+            const paras = [...card.querySelectorAll('p, [class*="uitk-text"]')]
+              .map(el => el.textContent.trim())
+              .filter(t => t.length > 20);
+            const text = paras.sort((a, b) => b.length - a.length)[0];
+            if (!text) continue;
 
-            const nameEl =
-              el.querySelector('[data-stid="review-author"], [class*="reviewer" i], [class*="author" i], h3, h4, strong');
-            const rawName = (nameEl?.textContent || '').trim().split('\n')[0];
-            if (!rawName || rawName.length > 60 || /^[\d★\s]+$/.test(rawName)) continue;
+            // Reviewer name: headings or bold text
+            const nameEl = card.querySelector('h2, h3, h4, strong, [class*="uitk-heading"]');
+            const rawName = (nameEl?.textContent || '').trim().split('\n')[0].split('  ')[0];
+            if (!rawName || rawName.length > 60 || /^[\d★\s/]+$/.test(rawName)) continue;
+            // Skip if it looks like the property title
+            if (/lake anna|retreat|getaway|kayak/i.test(rawName)) continue;
 
             let rating = 5;
-            const ratingEl = el.querySelector('[aria-label*="out of" i], [aria-label*="star" i], [class*="rating" i]');
+            const ratingEl = card.querySelector('[aria-label*="out of" i], [aria-label*="star" i]');
             if (ratingEl) {
               const m = (ratingEl.getAttribute('aria-label') || '').match(/(\d(?:\.\d+)?)/);
               if (m) rating = parseFloat(m[1]);
