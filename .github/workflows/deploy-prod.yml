@@ -12,8 +12,8 @@ jobs:
       id-token: write
       contents: read
     env:
-      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
-      OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      OIDC_ROLE_NAME: ${{ secrets.OIDC_ROLE_NAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,6 +24,7 @@ jobs:
           else
             echo "ENV_PREFIX=${{ github.ref_name }}" >> $GITHUB_ENV
           fi
+          echo "STACK_NAME=${{ vars.NAMESPACE }}-$(echo ${{ github.ref_name }} | sed 's/main/prod/')-${{ vars.APP_NAME }}" >> $GITHUB_ENV
       - name: Inject Recaptcha client key
         run: |
           sed -i "s|__RECAPTCHA_CLIENT_KEY__|${{ vars.RECAPTCHA_CLIENT_KEY }}|g" src/index.html
@@ -37,8 +38,6 @@ jobs:
           sed -i "s|__CONTACTFORM_KEY__|${{ vars.CONTACTFORM_KEY }}|g" src/assets/js/contactform.js
       - name: Print referenced environment variables
         run: |
-          echo "AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}"
-          echo "OIDC_ROLE_NAME: ${{ vars.OIDC_ROLE_NAME }}"
           echo "OwnerName: ${{ vars.OWNER_NAME }}"
           echo "AppName: ${{ vars.APP_NAME }}"
           echo "AppDescription: ${{ vars.APP_DESCRIPTION }}"
@@ -57,7 +56,7 @@ jobs:
         run: |
           aws cloudformation deploy \
             --template-file config/prod-stack.yaml \
-            --stack-name bf-prod-cozyhomeaway-ui \
+            --stack-name ${{ env.STACK_NAME }} \
             --capabilities CAPABILITY_NAMED_IAM \
             --parameter-overrides \
               OwnerName="${{ vars.OWNER_NAME }}" \
@@ -75,7 +74,7 @@ jobs:
       - name: Copy src contents to S3 bucket
         run: |
           BUCKET_NAME=$(aws cloudformation describe-stacks \
-            --stack-name bf-prod-cozyhomeaway-ui \
+            --stack-name ${{ env.STACK_NAME }} \
             --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
             --output text)
           aws s3 sync src/ s3://$BUCKET_NAME/ --delete
@@ -83,7 +82,7 @@ jobs:
       - name: Invalidate CloudFront cache
         run: |
           DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
-            --stack-name bf-prod-cozyhomeaway-ui \
+            --stack-name ${{ env.STACK_NAME }} \
             --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" \
             --output text)
           aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths '/*'
