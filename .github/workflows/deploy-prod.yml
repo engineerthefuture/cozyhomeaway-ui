@@ -21,6 +21,9 @@ jobs:
         run: |
           sed -i "s|__RECAPTCHA_CLIENT_KEY__|${{ vars.RECAPTCHA_CLIENT_KEY }}|g" src/index.html
           sed -i "s|RECAPTCHA_CLIENT_KEY|${{ vars.RECAPTCHA_CLIENT_KEY }}|g" src/assets/js/contactform.js
+      - name: Inject Google Tag Manager ID
+        run: |
+          sed -i "s|__GTAG_ID__|${{ vars.GTAG_ID }}|g" src/index.html
       - name: Inject contact form API and key
         run: |
           sed -i "s|__CONTACTFORM_API__|${{ vars.CONTACTFORM_API }}|g" src/assets/js/contactform.js
