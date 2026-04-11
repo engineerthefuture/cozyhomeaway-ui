@@ -1,0 +1,7 @@
+{
+  "name": "review-updater",
+  "private": true,
+  "dependencies": {
+    "playwright": "^1.44.0"
+  }
+}

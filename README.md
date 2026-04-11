@@ -25,6 +25,9 @@ config/        # CloudFormation and deployment configs
 ## Deployment
 Production deployments are managed via AWS CloudFormation and GitHub Actions. See `.github/workflows/deploy-prod.yml` and `config/prod-stack.yaml` for details.
 
+## Automated Review Updates
+A scheduled GitHub Actions workflow (`.github/workflows/update-reviews.yml`) runs daily at noon UTC. It uses Playwright to scrape new reviews from Airbnb and VRBO, appends any new reviews to `src/reviews.html`, and commits the change to `main`. That commit automatically triggers `deploy-prod.yml`, so new reviews go live without manual intervention.
+
 ## Getting Started
 1. Clone this repository.
 2. Make changes to `index.html` or assets as needed.
