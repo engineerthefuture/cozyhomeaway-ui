@@ -86,6 +86,7 @@ function buildHtml(reviews) {
   ).join('\n');
 
   return (
+    `<meta charset="utf-8">\n` +
     `<div class="reviews-carousel" id="reviewsCarousel">\n` +
     `${slides}\n` +
     `</div>\n` +
