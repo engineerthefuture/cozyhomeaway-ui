@@ -6,6 +6,9 @@ fetch('reviews.html')
     .then(function (html) {
         document.getElementById('reviews-placeholder').innerHTML = html;
 
+        var dotsContainer = document.getElementById('carouselDots');
+        if (dotsContainer) { dotsContainer.style.display = ''; }
+
         var slides = document.querySelectorAll('.review-slide');
         var dots   = document.querySelectorAll('.carousel-dot');
         if (!slides.length) { return; }

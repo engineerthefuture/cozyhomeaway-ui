@@ -90,7 +90,7 @@ function buildHtml(reviews) {
     `<div class="reviews-carousel" id="reviewsCarousel">\n` +
     `${slides}\n` +
     `</div>\n` +
-    `<div class="carousel-dots" id="carouselDots">\n` +
+    `<div class="carousel-dots" id="carouselDots" style="display:none">\n` +
     `${dots}\n` +
     `</div>\n`
   );
