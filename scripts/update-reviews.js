@@ -35,6 +35,16 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;');
 }
 
+function unescapeHtml(str) {
+  return str.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+}
+
+function reviewKey(review) {
+  return JSON.stringify([review.platform, review.name, review.text].map(
+    (value) => value.normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase()
+  ));
+}
+
 // ── parse / build reviews.html ────────────────────────────────────────────────
 
 function parseExistingReviews() {
@@ -55,11 +65,11 @@ function parseExistingReviews() {
 
     // meta content looks like: "· Airbnb" or "· Airbnb · Winchester, VA"
     // Strip the leading "· " bullet before splitting on remaining " · " delimiters.
-    const metaRaw  = metaM ? metaM[1].replace(/^·\s*/, '') : 'Airbnb';
+    const metaRaw  = metaM ? unescapeHtml(metaM[1]).replace(/^·\s*/, '') : 'Airbnb';
     const parts    = metaRaw.split(' · ').filter(Boolean);
     reviews.push({
-      name:     nameM[1].trim(),
-      text:     textM[1].trim(),
+      name:     unescapeHtml(nameM[1]).trim(),
+      text:     unescapeHtml(textM[1]).trim(),
       platform: parts[0] || 'Airbnb',
       location: parts[1] || '',
       rating:   starsM ? starsM[1].length : 5,
@@ -76,7 +86,7 @@ function buildHtml(reviews) {
     return [
       `    <div class="review-slide${i === 0 ? ' active' : ''}">`,
       `        <blockquote class="review-quote">"${escapeHtml(r.text)}"</blockquote>`,
-      `        <cite class="review-author"><span class="review-stars">${stars(r.rating)}</span> <strong>${escapeHtml(r.name)}</strong> <span class="review-meta">${meta}</span></cite>`,
+      `        <cite class="review-author"><span class="review-stars">${stars(r.rating)}</span> <strong>${escapeHtml(r.name)}</strong> <span class="review-meta">${escapeHtml(meta)}</span></cite>`,
       `    </div>`,
     ].join('\n');
   }).join('\n');
@@ -309,14 +319,7 @@ async function scrapeReviews(browser, url, platform) {
 
   await context.close();
 
-  // Deduplicate by name
-  const seen = new Set();
-  return reviews.filter((r) => {
-    const key = r.name.toLowerCase();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return reviews;
 }
 
 // ── VRBO scraper ─────────────────────────────────────────────────────────────
@@ -594,7 +597,7 @@ async function scrapeVrbo(browser) {
 (async () => {
   console.log('Parsing existing reviews...');
   const existing     = parseExistingReviews();
-  const existingKeys = new Set(existing.map((r) => r.name.toLowerCase()));
+  const seen = new Set(existing.map(reviewKey));
   console.log(`  ${existing.length} existing: ${existing.map((r) => r.name).join(', ') || '(none)'}`);
 
   const browser = await chromium.launch({ args: BROWSER_ARGS });
@@ -608,9 +611,12 @@ async function scrapeVrbo(browser) {
     await browser.close();
   }
 
-  const newReviews = [...airbnbReviews].filter(
-    (r) => !existingKeys.has(r.name.toLowerCase())
-  );
+  const newReviews = airbnbReviews.filter((review) => {
+    const key = reviewKey(review);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 
   if (!newReviews.length) {
     console.log('\nNo new reviews — reviews.html unchanged.');
